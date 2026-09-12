@@ -1,84 +1,102 @@
-# Session handoff — 2026-09-12
+# Session handoff — 2026-09-12 (implementation session)
 
 ## Session metadata
 
-- Branch: main (initial planning commit; feature branches start with M1)
-- Last commit: chore: install AI safety infrastructure (M0)
-- Test status: `9 passed in 0.27s` (smoke ×6 + no-egress scan ×3)
+- Branch: main (single-developer repo; feature branches begin at next issue)
+- Last commit: feat: M1–M4 engine + M2 server, dogfooded on FL Studio
+- Test status: `44 passed` (pytest, full suite) and `15 passed, 0 failed`
+  (tests/wire_test.py, stdio end-to-end)
 
 ## Current state
 
-M0 complete: governing rule, full design docs, ADRs 000–007, canonical
-schemas, CI, PR/issue templates, handoff template, smoke +
-no-egress capability scan (both green). FL Studio 26.1.6.5639 Windows
-installer staged at `targets/fl-studio/installers/` with pinned SHA-256
-(gitignored). Engine package `apire/` does not exist yet — by design; M1
-creates it test-first.
+Working now, verified by the commands above:
 
-Works: nothing at runtime — this repo is design + safety infrastructure.
-Broken: nothing known.
+- Engine: redaction gate, capture store (append-only manifests + atomic KB),
+  normalizer with per-entity canonical keys, OSC decoder, differential
+  correlator (exclusivity/periodicity/candidates + instrument-mismatch
+  guard), evidence KB (caps, corroboration, recomputing verifiers,
+  contradictions, unknowns), semantics valve (propose/attach_evidence).
+- Server: 7 action-enum tools; `file_ingest`, `udp_observe`, `process_meta`
+  transports live; other transports/actions return typed `unsupported`.
+- Dogfood: FL Studio 26.1.6 installed (`F:\FL Studio`, silent NSIS) and
+  observed; 883-frame detailed snapshot `cap_639ad53b1d8c`; 2 semantic
+  claims at INFERRED 0.40 with verified provenance.
+
+Broken: nothing known. Not yet built: exporters (M5), WS/SSE normalizers,
+`devtools_attach`/`http_proxy`/`pipe_listen`/`log_tail` transports.
 
 ## What was done and why
 
-New repo `mnehmos.api.re.mcp` (apire): passive API reverse engineering MCP —
-observe authorized applications, never impersonate them. First commit is the
-safety system per the vibe coders bible Ch18/34. Design merges: the user's
-pipeline (passive capture → normalize → differential correlate → schema
-induction → LLM semantic valve → evidence graph → exports incl.
-mcp_candidate); remcp's architecture contracts (engine/server split, envelope
-+ in-band warnings, closed provenance vocabulary with caps and deterministic
-verifiers, atomic JSON KB, pinned deps, wire test); the workspace
-action-enum doctrine from F:/Github/MCP_CONSOLIDATION_PLAN.md (7 tools, ≤8
-actions, no Optional params); and the dual-target evaluation rig
-(control reference app with planted spec discrepancy + FL Studio challenge).
+Built M1–M4 test-first (redaction/store/OSC red first, then green) and M2
+(server + wire test with deliberate failure paths). Dogfooded on FL Studio
+per the challenge-target protocol. Details and the exact evidence trail are
+in CHANGELOG.md (0.1.0) and targets/fl-studio/README.md.
 
 ## Decision log
 
-- Evidence levels: user's six (CONFIRMED…UNKNOWN) mapped to numeric bands;
-  machine values use underscores (`STRONGLY_INFERRED`).
-- `llm_proposal` provenance class cap pinned at 0.00 — semantic names enter
-  as zero-confidence proposals; only capture-derived classes raise claims.
-- 7 tools, not the doctrine's ≤6 target: merging the semantics write valve
-  into a read tool violates least-authority (ADR-005).
-- Repo created at F:/Github root beside its siblings, not F:/Github/mcp/ —
-  STANDARDS.md's layout table conflicts with actual sibling placement; noted
-  as an open question, move with the path-update checklist later.
-- Passive-only enforcement: elimination (no replay action exists) +
-  engineering (AST no-egress scan, sockets confined to apire/capture/) +
-  detection (tool-surface verb test) — ADR-003.
+- A bare proposal (confidence 0.0) is level `UNKNOWN`, not `HYPOTHESIS`: an
+  unsupported guess explains nothing and must not remove an observation from
+  `unknowns`. Doc + tests updated to match (this replaced the earlier
+  "band floor = HYPOTHESIS" wording).
+- process_meta emits per-entity frames (v2) alongside summary frames: the
+  canonical key must name the entity ("process FL64.exe"), or differential
+  correlation cannot distinguish apps. Instrument version is recorded per
+  capture; the correlator flags cross-version comparisons as unreliable.
+- Correlation caps output (200 exclusivity rows, 100 candidates) to keep
+  responses inside context budgets.
+- `attach_evidence` added to api_re_semantics (4 actions): the valve needs a
+  documented entry for capture-derived evidence; docs/tool-surface.md
+  updated. Rejected hiding it inside `review` (would merge read and write).
+
+## Dogfood findings (FL Studio)
+
+- `FL64.exe` main process; **WebView2 embedded** (`msedgewebview2.exe`
+  child) → FL 26's UI is Chromium; `devtools_attach` (M6) is the viable
+  passive transport (`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=
+  --remote-debugging-port=9222` at launch, a human decision).
+- OSC is **off** by default (no UDP sockets; no OSC config in registry;
+  empty remote-scripts folder). H1 requires an in-app enable step.
+- The instrument confound (v1 vs v2 captures) produced fake exclusivity
+  answers; guard added, and the baseline must be re-taken with v2 before any
+  further differential claims. See targets/fl-studio/README.md recipes.
 
 ## Deferred work (with reason)
 
-- Engine code: M1 milestone, test-first (redaction + store + file ingest).
-  Nothing to build until this planning commit lands.
-- reference_app + score.py: M2 (needs the proxy first to be meaningful).
-- FL Studio install: not performed this session (download only, as asked);
-  install is the campaign's first step in M6 or earlier if driven manually.
+- Baseline re-take with FL closed: needs FL closed; FL is currently running
+  on the user's desktop (left running deliberately — it is their session).
+- OSC enablement: in-app GUI step, human-in-the-loop.
+- Exporters (M5): next milestone after the baseline re-take; the graph must
+  carry levels through projections first.
 
 ## Open questions
 
-- Repo location (root vs F:/Github/mcp/) — see PROJECT_CONTEXT.md.
-- HTTPS capture strategy (local CA vs DevTools attach) — ADR required
-  before M4.
+- Whether FL's WebView2 traffic is high-value (UI API surface) or mostly
+  static assets — answer with the M6attach transport, not speculation.
+- Does FL's OSC config live only in-app, or in a config file after first
+  enable? Re-check the registry diff after the human enables OSC.
 
 ## Known blockers
 
-None.
+None technical. The differential demo is data-blocked on the baseline
+re-take (FL currently running).
 
 ## Next step (exactly one)
 
-Open M1 issues (redaction, capture store, file ingest) and build
-`tests/test_redaction.py` red: ingest a frame containing a bearer token
-through the public path and assert the stored bytes never contain it.
+When FL Studio is closed: capture process_meta v2 ×2 labeled `FL absent`,
+relaunch FL, capture ×2 labeled `FL present`, then
+`api_re_observations correlate` — confirm the candidates are FL-specific
+and NOT `svchost.exe`-style instrument artifacts, and record the result in
+targets/fl-studio/README.md.
 
 ## CLAUDE.md changed?
 
-- [x] No (created this session; constraints are initial)
+- [x] No
 
 ## Runtime handoff fields
 
-- Source of truth: capture store (not yet implemented; schemas in `schemas/`)
-- Allowed tools: none registered yet (server.py lands M2)
-- Prohibited actions: any transmission — enforced by tests/test_no_egress.py
-- Pending validations: none
-- Commit status: clean tree at M0
+- Source of truth: capture store (`apire_kb/`, machine-local, gitignored)
+- Allowed tools: the 7 `api_re_*` tools; no transmission action exists
+- Prohibited actions: any send/replay — enforced by tests/test_no_egress.py
+  and tests/test_tool_surface.py
+- Pending validations: baseline re-take (above)
+- Commit status: clean tree after this session's commit

@@ -16,6 +16,9 @@ handoff and continue. `pytest` green.
 
 ## M1 — redaction + capture store + file ingest (no sockets yet)
 
+**Status: done 2026-09-12** — plus `udp_observe` and `process_meta` landed
+early because the FL Studio campaign needed them.
+
 - `apire/errors.py`, `apire/evidence.py` (remcp contracts, renamed domain).
 - `apire/redaction.py` with the spec table from security-model; pseudonym
   mode + salt fingerprint.
@@ -30,6 +33,9 @@ handoff and continue. `pytest` green.
 **Gate:** HAR of the control target ingests; `pytest` green; secret grep clean.
 
 ## M2 — loopback HTTP capture + server
+
+**Status: server done 2026-09-12** (7 tools, wire test 15/15); the loopback
+HTTP proxy itself is deferred to the next iteration.
 
 - `apire/capture/http_proxy.py`: listen-only loopback proxy (the app points
   at it; it forwards observed exchanges unmodified — passthrough, not
@@ -47,6 +53,10 @@ handoff and continue. `pytest` green.
 
 ## M3 — differential correlator
 
+**Status: done 2026-09-12** — exclusivity, periodicity, candidates, and the
+instrument-version mismatch guard (a defect found during the FL Studio
+dogfood).
+
 - Capture labels + action notes as experimental conditions.
 - `apire/correlate.py`: exclusivity, temporal adjacency, periodicity,
   invariance, field discrimination.
@@ -61,6 +71,10 @@ property test (delete a capture → correlator's claim about it fails closed,
 not stale).
 
 ## M4 — schema induction + evidence graph + KB
+
+**Status: done 2026-09-12** — shape induction, KB policy with recomputing
+verifiers, contradictions, unknowns; semantic-name claims exercised on real
+FL Studio observations.
 
 - `apire/schema.py`, `apire/kb.py` (closed provenance vocabulary, caps,
   verifiers that recompute against the store), `apire/graph.py`.

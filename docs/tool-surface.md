@@ -66,6 +66,7 @@ pipe" becomes a stored, evidenced claim rather than a hunch.
 | Action | Params | Returns |
 | ------ | ------ | ------- |
 | `propose` | `subject`, `proposed_name`, `rationale`, `evidence_refs` (default []) | stored proposal @ confidence 0.0 — accepted shape-wise, granted nothing |
+| `attach_evidence` | `claim_id`, `provenance_json` (capture-derived provenance list), `confidence` | the claim re-evaluated: each verifiable class recomputed against the store, rejected on failure |
 | `review` | `claim_id` | the claim's current standing: which evidence raised/lowered it, what would confirm or refute |
 | `link` | `claim_id`, `related_claim_ids` (default []) | proposed relationships between claims (stored as proposals; relations earn confidence the same way) |
 

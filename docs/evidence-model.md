@@ -64,7 +64,9 @@ Claim    : semantic_name = "plugin.catalog.updated"
 Direction: server -> client
 
 api_re_semantics propose (the LLM's move)
-  -> stored: provenance [llm_proposal], confidence 0.00, level HYPOTHESIS (band floor)
+  -> stored: provenance [llm_proposal], confidence 0.00, level UNKNOWN
+     (a proposal with no corroboration is an interpretation attempt, not an
+     explanation: it does not remove the observation from `unknowns`)
   -> rationale stored verbatim; proposal cannot be rejected for being wrong,
      only for violating shape/policy. Wrongness is settled by evidence, not
      by a gatekeeper's taste.

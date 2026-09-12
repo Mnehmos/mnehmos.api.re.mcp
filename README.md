@@ -1,7 +1,13 @@
 # apire — mnehmos.api.re.mcp
 
-**Status:** planning. M0 (safety infrastructure + design) is committed; the engine
-is not implemented yet. Follow [docs/roadmap.md](docs/roadmap.md).
+**Status:** working, tested (44 tests + 15-check stdio wire test, green).
+M1–M4 partially landed: engine (redaction, capture store, normalizer, OSC
+decoder, differential correlator, evidence KB, semantics valve), server
+(7 action-enum tools), transports (`file_ingest`, `udp_observe`,
+`process_meta`). First real evidence captured against live FL Studio 26.1.6
+— see [targets/fl-studio/README.md](targets/fl-studio/README.md).
+Exporters, WS/SSE normalizers, and the DevTools attach transport land in
+M5/M6 ([docs/roadmap.md](docs/roadmap.md)).
 
 An MCP server that reverse engineers the API surface of an authorized application
 **by watching it**: it passively captures the traffic, frames, logs and bundles an
@@ -75,7 +81,7 @@ AUTHORIZED APPLICATION
 | `api_re_protocol` | transports, endpoints, messages, events, schemas, errors | evidence graph |
 | `api_re_architecture` | processes, connections, services, boundaries | evidence graph |
 | `api_re_evidence` | query, explain, contradictions, unknowns, experiments, policy | evidence graph |
-| `api_re_semantics` | propose, review, link | evidence graph (gated write valve) |
+| `api_re_semantics` | propose, attach_evidence, review, link | evidence graph (gated write valve) |
 | `api_re_export` | openapi, asyncapi, json_schema, protocol_spec, architecture, mcp_candidate | files |
 
 ## Evidence levels
@@ -122,7 +128,7 @@ mnehmos.api.re.mcp/
   .github/               (CI, PR and issue templates)
 ```
 
-## Registration (after M2)
+## Registration
 
 ```json
 {

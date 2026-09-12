@@ -14,32 +14,66 @@ an independent evidence audit ([docs/evaluation.md](../docs/evaluation.md)).
 - SHA-256: see `installers/SHA256SUMS.txt` (pinned at download time; verify
   before any reinstall)
 - Trial = full version; licensing does not affect observation.
+- Installed at `F:\FL Studio\` (silent NSIS install, 2026-09-12).
 
-## Campaign protocol
+## What has been observed so far (2026-09-12, first session)
 
-1. **Inventory session.** Install; then `process_meta` + `udp_observe` +
-   `pipe_listen` to inventory processes, modules, pipes, sockets, and traffic
-   while idle. Output: the first architecture map (all claims HYPOTHESIS or
-   better, each with its captures).
-2. **Hypothesis sessions** (one issue each, stated before capture):
-   - H1 — FL Studio's built-in OSC server emits traffic that correlates with
-     UI actions and is observable passively.
-   - H2 — the MIDI-scripting host (Python) exposes a scripting bridge
-     surface with a message vocabulary.
-   - H3 — plugin bridge processes exchange structured messages over
-     pipes/shared memory visible to `pipe_listen`.
-   - H4 — project operations (open/save) are mirrored in observable IPC.
-3. **Differential batteries** (human-performed, labeled): open project /
-   select channel / rename channel twice with names of different lengths /
-   open plugin browser / rescan plugins / install plugin. Each battery is a
-   capture with a condition label and action notes anchored to frame
-   sequences.
-4. **Interpretation valve.** Opaque observations (`type: 47`) get proposals;
-   differential evidence raises or declines them; contradictions are kept.
-5. **Audit.** A fresh session (not the one that built the map) runs
-   `api_re_evidence explain` on every STRONGLY_INFERRED+ claim and attacks it
-   with `contradictions`. The map is accepted only if the audit fails to
-   break it.
+Capture IDs are machine-local (store: `apire_kb/`, gitignored).
+
+| Finding | Evidence |
+| ------- | -------- |
+| `FL64.exe` is the main process (PID 44492 this run) | capture `cap_639ad53b1d8c` (process_meta/v2), claim `clm_ef1010918399910d` @ INFERRED |
+| FL Studio 26 embeds a Chromium UI: `msedgewebview2.exe` runs as a child of FL64.exe | capture `cap_639ad53b1d8c`; child link verified via psutil during recon (not itself a stored claim); claim `clm_4ec8f2f3600ff743` @ INFERRED |
+| FL64.exe loads ~149 modules in this install | capture `cap_639ad53b1d8c` (module_scan + module_loaded frames) |
+| FL64.exe makes outbound TLS to CDN infrastructure (Cloudflare/Google edges) at startup | capture `cap_639ad53b1d8c` (connection frames); connections are transient — the detailed snapshot caught 88 established system-wide |
+| OSC server is **off** by default: no UDP sockets on FL64; no config in the registry keys (`HKCU\Software\Image-Line\FL Studio 26`, `\Shared`) reveals OSC settings; remote-scripts folder is empty | direct psutil recon + registry query, 2026-09-12 |
+
+### Instrument lesson (encoded as a guard)
+
+The first two "FL absent" captures were taken with process_meta/**v1**
+(summary frames only); the FL-present detailed capture used **v2**
+(per-entity frames). Correlating across them showed *every* process as
+"exclusive to FL present" — including `svchost.exe`. That is an instrument
+confound, not evidence. The correlator now detects it: `api_re_observations
+correlate` returned `reliability=unreliable` with
+`instrument_version_mismatch` (`['process_meta/v2', 'unknown']`) and refused
+to present the candidates as trustworthy. **Rule: re-take the baseline with
+the current instrument before believing exclusivity.**
+
+## Next session recipes (human-in-the-loop)
+
+1. **Baseline re-take (5 min, required before any further diffing):**
+   close FL Studio; capture `process_meta` v2 with label `FL absent` ×2;
+   launch FL Studio; capture v2 with label `FL present` ×2; then
+   `api_re_observations correlate`. Expected candidates: `FL64.exe`,
+   `msedgewebview2.exe`, FL modules, FL64 connections — and *not*
+   `svchost.exe`.
+2. **H1 — OSC:** in FL Studio, enable the OSC server (Options → MIDI
+   settings → OSC; set an output port), then observe with
+   `api_re_capture action=start transport=udp_observe port=<that port>` while
+   performing labeled UI actions (select channel / rename ×2 with different
+   lengths / open plugin browser). The listener is passive: FL sends, we
+   listen.
+3. **H5 — WebView2 DevTools attach (new):** relaunch FL Studio with
+   `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9222`
+   set in the environment; this exposes FL's embedded browser to
+   **passive attach** (the `devtools_attach` transport, M6). This makes the
+   WebView's HTTP/WS traffic — the modern FL UI surface — observable without
+   touching FL's own protocol. The env var enables an inspection channel the
+   user designates; apire still never sends application requests.
+4. **H3 — bridges:** load a VST plugin (bridged) and capture `process_meta`
+   with hint on the bridge process; plugin-host IPC hypotheses can then be
+   checked against observation, not belief.
+
+## Campaign protocol (unchanged)
+
+1. Inventory session (done once; repeat per FL version).
+2. Hypothesis sessions (H1–H5), each an issue, hypothesis stated *before*
+   capture.
+3. Differential batteries: labeled human-performed actions.
+4. Interpretation valve: proposals at zero confidence; evidence decides.
+5. Audit: a fresh session attacks every STRONGLY_INFERRED+ claim with
+   `api_re_evidence explain` and `contradictions` before publication.
 
 ## Deliverable
 
@@ -50,7 +84,8 @@ how much of the surface remains UNKNOWN, stated plainly.
 ## Rules
 
 - The tool never sends anything to FL Studio. The human clicks; the tool
-  watches.
+  watches. (Relaunching FL with an env var that enables an inspection
+  channel is a human decision, recorded in the session hypothesis.)
 - OSC/pipes used by *other* software on the machine may appear in captures;
   they are noise until correlated, and correlating them is the correlator's
   job, not a reason to widen capture filters beyond the authorized
