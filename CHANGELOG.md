@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.1.1 — 2026-09-12
+
+Autonomous FL Studio campaign: differential proof, WebView2 attach transport,
+first observation of FL's cloud API surface. 51 tests + 15-check wire test.
+
+### Added
+
+- `devtools_attach` transport: attaches to a designated DevTools channel
+  (WebView2 `--remote-debugging-port` at launch) and observes HTTP/WS
+  traffic passively. Sends only `Network.enable` (a debugger control
+  command); never drives the page. WS frames are stamped with their
+  connection URL and key per-connection in the normalizer.
+- Hand-rolled HTTP/1.1 client for `/json/list` (urllib.request is on the
+  engine ban list; the ban was not weakened for convenience).
+- `tests/test_devtools.py`: event-mapping tests, raw HTTP client test
+  against a local socket server, and a live attach test that skips when no
+  debug port exists.
+- No-egress scan now confines `websocket`/`socket`/`ssl`/`selectors` to
+  `apire/capture/`.
+- Dogfood client: `$LAST_CAPTURE` / `$LAST_CLAIM` chaining for multi-step
+  sessions in one server process.
+
+### Fixed (all found by live dogfooding, not review)
+
+- Raw HTTP reader hung on Chromium's keep-alive `/json/list` (read-to-EOF);
+  now honors Content-Length and chunked encoding.
+- CDP WebSocket handshake rejected (403) when an Origin header is sent;
+  client now suppresses it.
+- Attached-but-closed DevTools channels were silent; the listener records
+  the closure as a capture warning.
+- `http_response` observations had no endpoint label (useless grouping);
+  now `HTTP <status> <path-template>`.
+
+### FL Studio findings (evidence in targets/fl-studio/README.md)
+
+- Differential proof under matched instruments: 144 FL-exclusive candidates
+  (reliability=sound), no cross-capture confounds.
+- FL 26's UI is an embedded Chromium (WebView2) loading
+  `sounds.cloud.image-line.com/fl-studio-grid`; its cloud API observed:
+  Unleash feature-flag evaluation (`unleash-edge.cloud.image-line.com`),
+  catalog filters, per-sound waveform rendering, telemetry envelope,
+  connectivity probe. 10 semantic claims at INFERRED with verified
+  provenance; one pair of rival readings kept as linked contradictions.
+- Redaction gate exercised on live traffic: 4 Authorization headers + 33
+  credential-shaped values + 14 sensitive keys, all stored redacted.
+
 ## 0.1.0 — 2026-09-12
 
 First working engine + server, dogfooded on live FL Studio. 44 tests +

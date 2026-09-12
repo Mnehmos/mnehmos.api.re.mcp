@@ -1,92 +1,87 @@
-# Session handoff — 2026-09-12 (implementation session)
+# Session handoff — 2026-09-12 (autonomous FL Studio campaign)
 
 ## Session metadata
 
-- Branch: main (single-developer repo; feature branches begin at next issue)
-- Last commit: feat: M1–M4 engine + M2 server, dogfooded on FL Studio
-- Test status: `44 passed` (pytest, full suite) and `15 passed, 0 failed`
-  (tests/wire_test.py, stdio end-to-end)
+- Branch: main
+- Last commit: feat: FL Studio campaign — differential proof, devtools_attach,
+  first cloud-API map
+- Test status: `51 passed` (pytest) and `15 passed, 0 failed`
+  (tests/wire_test.py)
 
 ## Current state
 
-Working now, verified by the commands above:
+Working and verified:
 
-- Engine: redaction gate, capture store (append-only manifests + atomic KB),
-  normalizer with per-entity canonical keys, OSC decoder, differential
-  correlator (exclusivity/periodicity/candidates + instrument-mismatch
-  guard), evidence KB (caps, corroboration, recomputing verifiers,
-  contradictions, unknowns), semantics valve (propose/attach_evidence).
-- Server: 7 action-enum tools; `file_ingest`, `udp_observe`, `process_meta`
-  transports live; other transports/actions return typed `unsupported`.
-- Dogfood: FL Studio 26.1.6 installed (`F:\FL Studio`, silent NSIS) and
-  observed; 883-frame detailed snapshot `cap_639ad53b1d8c`; 2 semantic
-  claims at INFERRED 0.40 with verified provenance.
+- All of 0.1.0, plus `devtools_attach` (DevTools/WebView2 attach transport)
+  with parser tests, a raw-HTTP client test, and a live attach test.
+- FL Studio campaign results (details + ids: targets/fl-studio/README.md,
+  CHANGELOG 0.1.1):
+  - Differential proof under matched instruments (process_meta/v2): 144
+    FL-exclusive candidates, reliability=sound, no confounds.
+  - Passive observation of FL's embedded Chromium (FL-Cloud grid): cloud
+    endpoints observed, 10 semantic claims at INFERRED 0.40 with verified
+    `captured_traffic` provenance; one rival-reading pair linked as
+    contradictions.
+  - Redaction exercised on live traffic: 4 Authorization headers + 33
+    credential-shaped values + 14 sensitive keys, zero leaks (manifest
+    audit).
 
-Broken: nothing known. Not yet built: exporters (M5), WS/SSE normalizers,
-`devtools_attach`/`http_proxy`/`pipe_listen`/`log_tail` transports.
+Broken: nothing known. FL Studio is currently running (relaunched by this
+session with the debug port enabled).
 
 ## What was done and why
 
-Built M1–M4 test-first (redaction/store/OSC red first, then green) and M2
-(server + wire test with deliberate failure paths). Dogfooded on FL Studio
-per the challenge-target protocol. Details and the exact evidence trail are
-in CHANGELOG.md (0.1.0) and targets/fl-studio/README.md.
+The user delegated autonomous operation ("no human in the loop"). Executed:
+baseline re-take (close FL → absent captures → relaunch → present captures),
+correlation, CDP reconnaissance, `devtools_attach` implementation (two live
+defects found and fixed: keep-alive HTTP parsing, Origin-header rejection),
+and a live FL-Cloud load capture followed by the semantics valve.
 
 ## Decision log
 
-- A bare proposal (confidence 0.0) is level `UNKNOWN`, not `HYPOTHESIS`: an
-  unsupported guess explains nothing and must not remove an observation from
-  `unknowns`. Doc + tests updated to match (this replaced the earlier
-  "band floor = HYPOTHESIS" wording).
-- process_meta emits per-entity frames (v2) alongside summary frames: the
-  canonical key must name the entity ("process FL64.exe"), or differential
-  correlation cannot distinguish apps. Instrument version is recorded per
-  capture; the correlator flags cross-version comparisons as unreliable.
-- Correlation caps output (200 exclusivity rows, 100 candidates) to keep
-  responses inside context budgets.
-- `attach_evidence` added to api_re_semantics (4 actions): the valve needs a
-  documented entry for capture-derived evidence; docs/tool-surface.md
-  updated. Rejected hiding it inside `review` (would merge read and write).
-
-## Dogfood findings (FL Studio)
-
-- `FL64.exe` main process; **WebView2 embedded** (`msedgewebview2.exe`
-  child) → FL 26's UI is Chromium; `devtools_attach` (M6) is the viable
-  passive transport (`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=
-  --remote-debugging-port=9222` at launch, a human decision).
-- OSC is **off** by default (no UDP sockets; no OSC config in registry;
-  empty remote-scripts folder). H1 requires an in-app enable step.
-- The instrument confound (v1 vs v2 captures) produced fake exclusivity
-  answers; guard added, and the baseline must be re-taken with v2 before any
-  further differential claims. See targets/fl-studio/README.md recipes.
+- Attach before navigation: the transport polls /json/list at 0.25s and
+  attaches to a page target as soon as it exists (about:blank), so the load
+  sequence is captured. Learned the hard way in the first attempt, which
+  attached to a doomed instance.
+- Response observations now carry `HTTP <status> <path>` labels; without
+  them the response side of the graph was ungroupable.
+- Unleash rival reading: `/api/frontend` was proposed as
+  `flstudio.cloud.feature_flags` (the evidence names an Unleash host), kept
+  alongside the earlier `frontend_config` reading as linked contradictions
+  rather than overwriting. Revision-by-contradiction demonstrated on real
+  data.
+- `$LAST_CAPTURE`/`$LAST_CLAIM` chaining added to the dogfood client instead
+  of adding stateful tool parameters to the MCP surface.
 
 ## Deferred work (with reason)
 
-- Baseline re-take with FL closed: needs FL closed; FL is currently running
-  on the user's desktop (left running deliberately — it is their session).
-- OSC enablement: in-app GUI step, human-in-the-loop.
-- Exporters (M5): next milestone after the baseline re-take; the graph must
-  carry levels through projections first.
+- Response bodies (`Network.getResponseBody`): needed to settle the
+  feature_flags-vs-config rivalry; next transport upgrade.
+- Next.js `/_next/data/<buildId>/` path-template collapse: build-id segment
+  varies, routes do not group yet (normalizer rule needed).
+- OSC (H1): requires in-app GUI enablement — human step, explicitly out of
+  scope for autonomous operation.
+- Exporters (M5): still pending; the graph should carry
+  `evidence_level` through projections first (partially done in
+  `apire/project.py`).
 
 ## Open questions
 
-- Whether FL's WebView2 traffic is high-value (UI API surface) or mostly
-  static assets — answer with the M6attach transport, not speculation.
-- Does FL's OSC config live only in-app, or in a config file after first
-  enable? Re-check the registry diff after the human enables OSC.
+- Which cloud endpoints require the authenticated session (only the Unleash
+  host showed Authorization; the trial may be partially authenticated)?
+- Does FL-Cloud use WebSockets at all? Zero ws_frame observations in an
+  80s idle window (possibly load-only traffic).
 
 ## Known blockers
 
-None technical. The differential demo is data-blocked on the baseline
-re-take (FL currently running).
+None. FL is running; killing/relaunching it is safe (fresh trial, no user
+work in it).
 
 ## Next step (exactly one)
 
-When FL Studio is closed: capture process_meta v2 ×2 labeled `FL absent`,
-relaunch FL, capture ×2 labeled `FL present`, then
-`api_re_observations correlate` — confirm the candidates are FL-specific
-and NOT `svchost.exe`-style instrument artifacts, and record the result in
-targets/fl-studio/README.md.
+Add `Network.getResponseBody` capture (opt-in, size-capped) to
+`devtools_attach`, then re-run the FL-Cloud load capture to settle the
+feature_flags-vs-frontend_config contradiction with response-shape evidence.
 
 ## CLAUDE.md changed?
 
@@ -95,8 +90,8 @@ targets/fl-studio/README.md.
 ## Runtime handoff fields
 
 - Source of truth: capture store (`apire_kb/`, machine-local, gitignored)
-- Allowed tools: the 7 `api_re_*` tools; no transmission action exists
+- Allowed tools: 7 `api_re_*`; no transmission action exists
 - Prohibited actions: any send/replay — enforced by tests/test_no_egress.py
   and tests/test_tool_surface.py
-- Pending validations: baseline re-take (above)
+- Pending validations: `Network.getResponseBody` upgrade (above)
 - Commit status: clean tree after this session's commit

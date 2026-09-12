@@ -119,14 +119,32 @@ def main(argv: list[str]) -> int:
         if mode == "run":
             script = json.loads(argv[2])
             failed = False
+            last_capture = ""
+            last_claim = ""
             for step in script:
                 delay = float(step.get("delay", 0))
                 if delay:
                     time.sleep(delay)
-                out = c.call(step["tool"], step.get("args", {}))
+                args = step.get("args", {})
+                # $LAST_CAPTURE / $LAST_CLAIM: substitute ids from the most
+                # recent result, so multi-step observation sessions can chain
+                # start -> act -> stop -> propose -> attach in one process.
+                for key, value in list(args.items()):
+                    if value == "$LAST_CAPTURE":
+                        args[key] = last_capture
+                    elif value == "$LAST_CLAIM":
+                        args[key] = last_claim
+                out = c.call(step["tool"], args)
                 label = step.get("label") or f"{step['tool']}"
                 print(f"===== {label} =====")
                 print(json.dumps(out, indent=1, default=str))
+                if isinstance(out, dict):
+                    cap = ((out.get("result") or {}).get("capture") or {})
+                    if isinstance(cap, dict) and cap.get("capture_id"):
+                        last_capture = cap["capture_id"]
+                    claim = ((out.get("result") or {}).get("claim") or {})
+                    if isinstance(claim, dict) and claim.get("claim_id"):
+                        last_claim = claim["claim_id"]
                 if isinstance(out, dict) and out.get("ok") is False:
                     failed = True
             return 1 if failed else 0

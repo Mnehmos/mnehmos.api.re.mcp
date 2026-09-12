@@ -38,6 +38,10 @@ BANNED_CALLS = {
 # The only module allowed to touch sockets, under the connect policy of ADR-003.
 SOCKET_CAPABLE_MODULES = {"capture"}
 
+# Libraries that exist to talk to the network: permitted only inside the
+# sanctioned capture modules, where every use is reviewed under ADR-003.
+BANNED_OUTSIDE_CAPTURE = {"websocket", "socket", "ssl", "selectors"}
+
 
 def _module_allows_sockets(rel: Path) -> bool:
     return len(rel.parts) > 0 and rel.parts[0] in SOCKET_CAPABLE_MODULES
@@ -63,10 +67,14 @@ def _scan_module(rel: Path, py: Path, violations: list) -> None:
                 root = alias.name.split(".")[0]
                 if alias.name in BANNED_IMPORTS or root in {b.split(".")[0] for b in BANNED_IMPORTS}:
                     violations.append(f"{rel}: import {alias.name}")
+                if root in BANNED_OUTSIDE_CAPTURE and not allows_sockets:
+                    violations.append(f"{rel}: import {alias.name} outside apire/capture/")
         elif isinstance(node, ast.ImportFrom) and node.module:
             root = node.module.split(".")[0]
             if node.module in BANNED_IMPORTS or root in {b.split(".")[0] for b in BANNED_IMPORTS}:
                 violations.append(f"{rel}: from {node.module} import ...")
+            if root in BANNED_OUTSIDE_CAPTURE and not allows_sockets:
+                violations.append(f"{rel}: from {node.module} import ... outside apire/capture/")
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             attr = node.func.attr
             if attr in BANNED_CALLS and not allows_sockets:

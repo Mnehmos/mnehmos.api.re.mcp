@@ -98,6 +98,10 @@ def observation_key_for_frame(frame: dict) -> str:
         return canonical_key(kind, transport, "", path_template(path), status_class)
     if kind == "osc_message":
         return canonical_key(kind, transport, "", str(payload.get("address", "/unknown")), str(payload.get("types", "")))
+    if kind == "ws_frame" and payload.get("ws_url"):
+        # DevTools-attached WS frames are stamped with their connection URL;
+        # each connection is its own observable behavior.
+        return canonical_key(kind, transport, "", str(payload["ws_url"]), str(payload.get("opcode", "")))
     if kind == "process_meta":
         event = str(payload.get("event", "unknown"))
         # Per-entity events key on the entity's stable identity, not the pid
@@ -138,6 +142,10 @@ def observation_from_group(key: str, frames: list[dict]) -> dict:
         url = str(payload0.get("url", "")).split("?", 1)[0].split("//", 1)[-1]
         endpoint = path_template("/" + url.split("/", 1)[-1] if "/" in url else url)
         endpoint = frames[0].get("payload", {}).get("method", "GET").upper() + " " + endpoint
+    elif kind == "http_response":
+        path = str(payload0.get("path", "/"))
+        status = str(payload0.get("status", ""))
+        endpoint = f"HTTP {status} {path_template(path)}".strip()
     elif kind == "osc_message":
         endpoint = str(payload0.get("address", ""))
     elif kind == "process_meta":

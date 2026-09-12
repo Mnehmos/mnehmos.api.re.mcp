@@ -98,6 +98,14 @@ reported; a second opinion pass reviews the mcp_candidate output.
 
 ## M6 — WS/SSE + attach transports; FL Studio campaign
 
+**Status: partially landed 2026-09-12** — `devtools_attach` (the WebView2
+attach transport) is live and produced the first passive map of FL Studio's
+cloud API surface. OSC remains blocked on an in-app enable (human step);
+`http_proxy`/`pipe_listen`/`log_tail` and WS/SSE normalizers pending.
+Also pending from the campaign: response bodies via `Network.getResponseBody`
+(the upgrade that would let the evidence settle the Unleash-vs-config rival
+readings).
+
 - WS + SSE normalizers; `devtools_attach` (browser targets), `pipe_listen`,
   `udp_observe`, `process_meta` transports.
 - FL Studio campaign begins per targets/fl-studio/README.md: install,

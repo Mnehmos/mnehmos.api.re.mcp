@@ -1,13 +1,15 @@
 # apire — mnehmos.api.re.mcp
 
-**Status:** working, tested (44 tests + 15-check stdio wire test, green).
-M1–M4 partially landed: engine (redaction, capture store, normalizer, OSC
-decoder, differential correlator, evidence KB, semantics valve), server
-(7 action-enum tools), transports (`file_ingest`, `udp_observe`,
-`process_meta`). First real evidence captured against live FL Studio 26.1.6
-— see [targets/fl-studio/README.md](targets/fl-studio/README.md).
-Exporters, WS/SSE normalizers, and the DevTools attach transport land in
-M5/M6 ([docs/roadmap.md](docs/roadmap.md)).
+**Status:** working, tested (51 tests + 15-check stdio wire test, green).
+M1–M4 landed, plus `devtools_attach` from M6: engine (redaction, capture
+store, normalizer, OSC decoder, differential correlator, evidence KB,
+semantics valve), server (7 action-enum tools), transports (`file_ingest`,
+`udp_observe`, `process_meta`, `devtools_attach`). Real evidence against
+live FL Studio 26.1.6: differential proof under matched instruments, and
+the first map of FL's cloud API surface observed through its embedded
+Chromium — see [targets/fl-studio/README.md](targets/fl-studio/README.md).
+Loopback proxy, pipe listener, exporters, and WS/SSE normalizers remain
+([docs/roadmap.md](docs/roadmap.md)).
 
 An MCP server that reverse engineers the API surface of an authorized application
 **by watching it**: it passively captures the traffic, frames, logs and bundles an

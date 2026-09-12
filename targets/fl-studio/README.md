@@ -11,67 +11,85 @@ an independent evidence audit ([docs/evaluation.md](../docs/evaluation.md)).
 - Source: official Image-Line redirect
   `https://support.image-line.com/redirect/flstudio_win_installer`
   → `https://install.image-line.com/flstudio/flstudio_win64_26.1.6.5639.exe`
-- SHA-256: see `installers/SHA256SUMS.txt` (pinned at download time; verify
-  before any reinstall)
-- Trial = full version; licensing does not affect observation.
+- SHA-256: see `installers/SHA256SUMS.txt` (pinned at download time)
 - Installed at `F:\FL Studio\` (silent NSIS install, 2026-09-12).
+- Trial = full version; licensing does not affect observation.
 
-## What has been observed so far (2026-09-12, first session)
+## Observation log (session 2, autonomous, 2026-09-12)
 
-Capture IDs are machine-local (store: `apire_kb/`, gitignored).
+Capture IDs and claim IDs are machine-local (store `apire_kb/`, gitignored).
 
-| Finding | Evidence |
-| ------- | -------- |
-| `FL64.exe` is the main process (PID 44492 this run) | capture `cap_639ad53b1d8c` (process_meta/v2), claim `clm_ef1010918399910d` @ INFERRED |
-| FL Studio 26 embeds a Chromium UI: `msedgewebview2.exe` runs as a child of FL64.exe | capture `cap_639ad53b1d8c`; child link verified via psutil during recon (not itself a stored claim); claim `clm_4ec8f2f3600ff743` @ INFERRED |
-| FL64.exe loads ~149 modules in this install | capture `cap_639ad53b1d8c` (module_scan + module_loaded frames) |
-| FL64.exe makes outbound TLS to CDN infrastructure (Cloudflare/Google edges) at startup | capture `cap_639ad53b1d8c` (connection frames); connections are transient — the detailed snapshot caught 88 established system-wide |
-| OSC server is **off** by default: no UDP sockets on FL64; no config in the registry keys (`HKCU\Software\Image-Line\FL Studio 26`, `\Shared`) reveals OSC settings; remote-scripts folder is empty | direct psutil recon + registry query, 2026-09-12 |
+### Differential result (process_meta v2, four labeled captures)
 
-### Instrument lesson (encoded as a guard)
+Conditions: `FL absent` ×2 (`cap_6699ab1cabfe`, `cap_68746cdaf15a`) vs
+`FL present` ×2 (`cap_1cf3313ce9c3`, `cap_15592f6e78d6`). All captures
+same instrument (`process_meta/v2`) → **reliability=sound, no warnings**;
+144 candidates, all exclusive to FL-present, none to FL-absent. Examples:
 
-The first two "FL absent" captures were taken with process_meta/**v1**
-(summary frames only); the FL-present detailed capture used **v2**
-(per-entity frames). Correlating across them showed *every* process as
-"exclusive to FL present" — including `svchost.exe`. That is an instrument
-confound, not evidence. The correlator now detects it: `api_re_observations
-correlate` returned `reliability=unreliable` with
-`instrument_version_mismatch` (`['process_meta/v2', 'unknown']`) and refused
-to present the candidates as trustworthy. **Rule: re-take the baseline with
-the current instrument before believing exclusivity.**
+- `process msedgewebview2.exe` (FL's embedded Chromium renderers)
+- module loads: `ilwasapi2asio_x64.dll` (Image-Line ASIO driver),
+  `dsound.dll`, `mmdevapi.dll`, `msacm32.dll` (the audio stack)
+- `socket tcp 127.0.0.1:9222 msedgewebview2.exe` (the debug channel itself)
+- No `svchost.exe`-style artifacts: the instrument confound from session 1
+  is gone under matched instruments.
 
-## Next session recipes (human-in-the-loop)
+### FL's cloud API surface, observed passively (devtools_attach)
 
-1. **Baseline re-take (5 min, required before any further diffing):**
-   close FL Studio; capture `process_meta` v2 with label `FL absent` ×2;
-   launch FL Studio; capture v2 with label `FL present` ×2; then
-   `api_re_observations correlate`. Expected candidates: `FL64.exe`,
-   `msedgewebview2.exe`, FL modules, FL64 connections — and *not*
-   `svchost.exe`.
-2. **H1 — OSC:** in FL Studio, enable the OSC server (Options → MIDI
-   settings → OSC; set an output port), then observe with
-   `api_re_capture action=start transport=udp_observe port=<that port>` while
-   performing labeled UI actions (select channel / rename ×2 with different
-   lengths / open plugin browser). The listener is passive: FL sends, we
-   listen.
-3. **H5 — WebView2 DevTools attach (new):** relaunch FL Studio with
-   `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9222`
-   set in the environment; this exposes FL's embedded browser to
-   **passive attach** (the `devtools_attach` transport, M6). This makes the
-   WebView's HTTP/WS traffic — the modern FL UI surface — observable without
-   touching FL's own protocol. The env var enables an inspection channel the
-   user designates; apire still never sends application requests.
-4. **H3 — bridges:** load a VST plugin (bridged) and capture `process_meta`
-   with hint on the bridge process; plugin-host IPC hypotheses can then be
-   checked against observation, not belief.
+Method: FL relaunched with
+`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9222`,
+apire attached to the page target *before* navigation and observed the full
+FL-Cloud grid load. Capture `cap_0144babac9e8`: 153 frames from 897 CDP
+events. Claims at INFERRED 0.40 (proposed at 0.0, raised by verified
+`captured_traffic` provenance), except where contradicted below:
+
+| Observation | Semantic claim |
+| ----------- | -------------- |
+| `HEAD /online.txt` ×3 | `flstudio.cloud.connectivity_check` |
+| `GET /api/frontend` (host `unleash-edge.cloud.image-line.com`) | `flstudio.cloud.feature_flags` — **rival reading held**: `flstudio.cloud.frontend_config`; both linked as contradictions |
+| `POST /api/frontend/client/metrics` (same host, authenticated) | `flstudio.cloud.client_metrics` |
+| `POST /api/{var}/envelope/` ×4 | `flstudio.cloud.telemetry_envelope` |
+| `GET /content/additional-component-data/` | `flstudio.cloud.content.component_data` |
+| `GET /filter/genre` (with `/filter/instrument`, `/label`, `/product/labels/available`, `/product/sales/all-trending-packs/...`) | `flstudio.cloud.catalog.filter_genre` |
+| `GET /waveform/<url-encoded CDN URL>` (dozens of per-sound URLs) | `flstudio.cloud.waveform_render` |
+| Next.js data routes `/_next/data/<buildId>/fl-studio-*.json` | not yet claimed (build-id segment varies; needs a path-template rule) |
+| GA4 `POST /g/collect`, GTM `/gtag/js`, `/tag` | not yet claimed (third-party analytics, out of scope for FL semantics) |
+
+**Authentication evidence:** 4 requests carried an `Authorization` header
+(all on the Unleash host) — stored as `<REDACTED>` by the ingestion gate,
+as were 33 credential-shaped values and 14 sensitive keys across the
+captures. Zero leaks (redaction audit over stored manifests).
+
+### Native-process claims
+
+- `flstudio.main.process` (`FL64.exe`) — INFERRED 0.40
+- `flstudio.embedded.webview` (`msedgewebview2.exe` as FL's child) —
+  INFERRED 0.40; the child relation was verified via psutil during recon
+  but is not itself a stored claim yet.
+
+## Next observations (no human needed)
+
+1. **Native API surface:** FL's OSC server is off by default (no UDP
+   sockets; no registry config; empty remote-scripts folder). Enabling it
+   requires in-app GUI steps — deferred until a human wants it; the
+   WebView path yielded a real surface without it.
+2. **Sharpen the rivals:** `/api/frontend`'s Unleash reading can be
+   confirmed/refuted by looking for Unleash SDK-shaped responses (feature
+   toggle JSON) in a future capture — needs response bodies, which
+   devtools_attach v1 does not fetch (`Network.getResponseBody` is the
+   next transport upgrade).
+3. **Plugin bridges (H3):** load a bridged VST in FL and capture
+   process_meta with a hint matching the bridge process name.
+4. **Path templates:** teach the normalizer to collapse Next.js build-id
+   segments (`/_next/data/<hash>/`) so those routes group.
 
 ## Campaign protocol (unchanged)
 
-1. Inventory session (done once; repeat per FL version).
+1. Inventory session (repeat per FL version).
 2. Hypothesis sessions (H1–H5), each an issue, hypothesis stated *before*
    capture.
 3. Differential batteries: labeled human-performed actions.
-4. Interpretation valve: proposals at zero confidence; evidence decides.
+4. Interpretation valve: proposals at zero confidence; evidence decides;
+   rival readings are kept as linked contradictions.
 5. Audit: a fresh session attacks every STRONGLY_INFERRED+ claim with
    `api_re_evidence explain` and `contradictions` before publication.
 
@@ -83,9 +101,9 @@ how much of the surface remains UNKNOWN, stated plainly.
 
 ## Rules
 
-- The tool never sends anything to FL Studio. The human clicks; the tool
-  watches. (Relaunching FL with an env var that enables an inspection
-  channel is a human decision, recorded in the session hypothesis.)
+- The tool never sends anything to FL Studio. The human (or the operator's
+  agent) clicks; the tool watches. Enabling a debug channel at launch is an
+  operator decision, recorded in the capture's authorization statement.
 - OSC/pipes used by *other* software on the machine may appear in captures;
   they are noise until correlated, and correlating them is the correlator's
   job, not a reason to widen capture filters beyond the authorized

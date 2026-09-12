@@ -14,10 +14,10 @@ TRANSPORTS = {
     "file_ingest": "apire.capture.file_ingest:FileIngestListener",
     "udp_observe": "apire.capture.udp_observe:UdpObserveListener",
     "process_meta": "apire.capture.process_meta:ProcessMetaListener",
-    # M2/M6: loopback passthrough proxy, DevTools attach, named-pipe server,
-    # log tailing. Registered here only with their ADR-003 review done.
+    "devtools_attach": "apire.capture.devtools_attach:DevtoolsAttachListener",
+    # M2/M6: loopback passthrough proxy, named-pipe server, log tailing.
+    # Registered here only with their ADR-003 review done.
     "http_proxy": None,
-    "devtools_attach": None,
     "pipe_listen": None,
     "log_tail": None,
 }
