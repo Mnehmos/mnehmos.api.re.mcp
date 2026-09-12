@@ -1,0 +1,34 @@
+# --- secrets (TMRI standard) ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+secrets.json
+
+# --- runtime evidence stores (never leave the machine) ---
+apire_kb/
+captures/
+targets/*/installers/
+targets/*/captures/
+*.pcap
+*.pcapng
+*.har
+
+# --- local MCP registration (per remcp convention) ---
+.mcp.json
+
+# --- python ---
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# --- os/editor ---
+Thumbs.db
+.DS_Store

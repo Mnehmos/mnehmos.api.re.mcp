@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Mnehmos/mnehmos.api.re.mcp/schemas/semantic-proposal.schema.json",
+  "title": "SemanticProposal",
+  "description": "What the LLM submits through api_re_semantics propose. Stored verbatim; grants zero confidence by policy (llm_proposal cap = 0.0). The proposal is a hypothesis with a shape, not a truth.",
+  "type": "object",
+  "required": ["subject", "proposed_name", "rationale"],
+  "properties": {
+    "subject": {
+      "type": "string",
+      "description": "observation_id / canonical_key / endpoint the interpretation is about"
+    },
+    "proposed_name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.]*$",
+      "description": "Dotted-lowercase semantic name, e.g. plugin.catalog.updated"
+    },
+    "rationale": { "type": "string" },
+    "evidence_refs": {
+      "type": "array",
+      "default": [],
+      "items": { "type": "string" },
+      "description": "Capture/observation IDs the model believes support this. The engine checks them; if they do not support the claim, that is recorded as evidence against, not a rejection."
+    },
+    "proposal_kind": {
+      "enum": ["semantic_name", "relationship", "direction", "experiment_design"],
+      "default": "semantic_name"
+    },
+    "related_claim_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^clm_[0-9a-f]{16}$" }
+    }
+  }
+}

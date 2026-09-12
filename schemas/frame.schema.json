@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Mnehmos/mnehmos.api.re.mcp/schemas/frame.schema.json",
+  "title": "Frame",
+  "description": "One raw normalized unit of observation. Immutable, append-only, redacted before persistence.",
+  "type": "object",
+  "required": ["frame_id", "capture_id", "seq", "ts_utc", "direction", "transport", "payload_sha256"],
+  "properties": {
+    "frame_id": { "type": "string", "pattern": "^frm_[0-9a-f]{16}$" },
+    "capture_id": { "type": "string", "pattern": "^cap_[0-9a-f]{12}$" },
+    "seq": { "type": "integer", "minimum": 0, "description": "Monotonic within capture; the only ordering the correlator trusts within a capture" },
+    "ts_utc": { "type": "string", "format": "date-time" },
+    "direction": { "enum": ["client_to_server", "server_to_client", "unspecified"] },
+    "transport": { "type": "string" },
+    "channel": { "type": "string", "description": "Socket pair, pipe name, log source, file path" },
+    "kind_hint": {
+      "enum": ["http_request", "http_response", "ws_frame", "sse_event", "pipe_message", "log_line", "bundle_symbol", "process_meta", "raw"],
+      "description": "Transport-level hint; normalize/ decides the final Observation kind"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Redacted, normalized payload. Credential material is <REDACTED> or ~:pseudonym before this object exists.",
+      "additionalProperties": true
+    },
+    "payload_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "raw_ref": { "type": "string", "description": "Content-addressed blob ref (sha256[:16]) into the capture store" },
+    "redacted": { "type": "boolean" },
+    "redaction_classes_fired": { "type": "array", "items": { "type": "string" } }
+  }
+}

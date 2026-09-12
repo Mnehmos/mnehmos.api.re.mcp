@@ -1,0 +1,3 @@
+apire — mnehmos.api.re.mcp
+Passive API reverse engineering: observe applications, never impersonate them.
+No network-transmission capability by construction. See docs/security-model.md.

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Mnehmos/mnehmos.api.re.mcp/schemas/capture.schema.json",
+  "title": "Capture",
+  "description": "A labeled, bounded observation span. The label is the experimental condition supplied by the human.",
+  "type": "object",
+  "required": ["capture_id", "session_id", "transport", "started_utc", "frame_count"],
+  "properties": {
+    "capture_id": { "type": "string", "pattern": "^cap_[0-9a-f]{12}$" },
+    "session_id": { "type": "string", "pattern": "^sess_[0-9a-f]{12}$" },
+    "label": {
+      "type": "string",
+      "description": "The experimental condition, e.g. 'opened plugin browser'. Empty until api_re_capture label is called."
+    },
+    "hypothesis": { "type": "string" },
+    "authorization_statement_fingerprint": {
+      "type": "string",
+      "description": "sha256[:16] of the human's authorization statement. The statement itself is session-level, not per capture."
+    },
+    "transport": {
+      "enum": ["http_proxy", "log_tail", "file_ingest", "devtools_attach", "pipe_listen", "udp_observe", "process_meta"]
+    },
+    "started_utc": { "type": "string", "format": "date-time" },
+    "ended_utc": { "type": ["string", "null"], "format": "date-time" },
+    "frame_count": { "type": "integer", "minimum": 0 },
+    "bytes_total": { "type": "integer", "minimum": 0 },
+    "frames_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["seq", "note_utc", "text"],
+        "properties": {
+          "seq": { "type": "integer", "description": "Monotonic frame index the note anchors to" },
+          "note_utc": { "type": "string", "format": "date-time" },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "redaction_report": {
+      "type": "object",
+      "description": "Aggregate of per-frame redaction reports. Counts and classes only, never values.",
+      "properties": {
+        "classes_fired": { "type": "object", "additionalProperties": { "type": "integer" } },
+        "frames_redacted": { "type": "integer" },
+        "unrecognized_high_entropy_blobs": { "type": "integer" }
+      }
+    }
+  }
+}

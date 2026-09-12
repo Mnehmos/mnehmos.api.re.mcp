@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Mnehmos/mnehmos.api.re.mcp/schemas/observation.schema.json",
+  "title": "Observation",
+  "description": "A deduplicated normalized fact derived from frames. The canonical_key is the unit the differential correlator diffs.",
+  "type": "object",
+  "required": ["observation_id", "kind", "transport", "canonical_key", "first_seen_utc", "last_seen_utc", "observation_count", "capture_refs"],
+  "properties": {
+    "observation_id": { "type": "string", "pattern": "^obs_[0-9a-f]{16}$" },
+    "kind": {
+      "enum": ["http_request", "http_response", "ws_frame", "sse_event", "pipe_message", "log_line", "bundle_symbol", "process_meta"]
+    },
+    "transport": { "type": "string" },
+    "endpoint_template": {
+      "type": "string",
+      "description": "Path/subject with variable segments templated, e.g. /api/projects/{id}/tracks"
+    },
+    "canonical_key": {
+      "type": "string",
+      "description": "Hash over (kind, transport, method, endpoint template, payload shape signature). Equality here = same observable behavior."
+    },
+    "shape": {
+      "type": "object",
+      "description": "Induced payload shape: properties, types, constant vs variable fields",
+      "additionalProperties": true
+    },
+    "periodic": {
+      "type": "object",
+      "description": "Present when periodicity detection classified this observation as heartbeat/telemetry noise",
+      "properties": {
+        "is_periodic": { "const": true },
+        "interval_estimate_ms": { "type": "number" },
+        "seen_across_all_captures": { "type": "boolean" }
+      }
+    },
+    "first_seen_utc": { "type": "string", "format": "date-time" },
+    "last_seen_utc": { "type": "string", "format": "date-time" },
+    "observation_count": { "type": "integer", "minimum": 1 },
+    "capture_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^cap_[0-9a-f]{12}$" }
+    },
+    "sighting_frame_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^frm_[0-9a-f]{16}$" }
+    }
+  }
+}

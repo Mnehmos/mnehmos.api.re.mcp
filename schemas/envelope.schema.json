@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Mnehmos/mnehmos.api.re.mcp/schemas/envelope.schema.json",
+  "title": "Envelope",
+  "description": "Every tool response, success or failure. Remcp's contract: in-band evidence and warnings, errors as payloads not protocol errors.",
+  "type": "object",
+  "required": ["ok", "target", "method", "reliability", "warnings"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "target": { "type": "string", "description": "Session/capture/claim/export the call addressed" },
+    "method": { "type": "string", "description": "Tool action performed" },
+    "reliability": {
+      "enum": ["sound", "degraded", "unreliable"],
+      "description": "Worst impact across warnings attached to this response"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "detail", "impact"],
+        "properties": {
+          "code": { "type": "string" },
+          "detail": { "type": "string" },
+          "impact": { "enum": ["sound", "degraded", "unreliable"] }
+        }
+      }
+    },
+    "result": { "type": "object" },
+    "error": {
+      "type": "object",
+      "description": "Present when ok=false",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "hint": { "type": "string" }
+      }
+    },
+    "response_clipped": {
+      "type": "object",
+      "description": "Present when the result exceeded APIRE_MAX_RESPONSE_CHARS",
+      "properties": {
+        "original_chars": { "type": "integer" },
+        "narrow_with": { "type": "string" }
+      }
+    }
+  }
+}

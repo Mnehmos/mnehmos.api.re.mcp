@@ -1,0 +1,23 @@
+name: ci
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pinned deps
+        run: pip install -r requirements.txt
+      - name: Secret scan (TMRI standard)
+        shell: bash
+        run: |
+          ! git grep -lIE "sk-(proj-)?[A-Za-z0-9_-]{20}|sk-ant-[A-Za-z0-9_-]{20}|gh[pousr]_[A-Za-z0-9]{30}|AKIA[0-9A-Z]{16}"
+      - name: Test suite (smoke + no-egress capability scan)
+        run: pytest

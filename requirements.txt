@@ -1,0 +1,3 @@
+# Pinned like a compiler (same discipline as remcp). New extractors/listeners
+# are added here only with an exact pin and a regression test.
+mcp>=1.2.0

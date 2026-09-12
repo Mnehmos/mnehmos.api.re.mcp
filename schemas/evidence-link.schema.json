@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Mnehmos/mnehmos.api.re.mcp/schemas/evidence-link.schema.json",
+  "title": "EvidenceLink",
+  "description": "A claim about an observation, with provenance, confidence, and its verification record. Remcp's symbol shape, renamed for this domain.",
+  "type": "object",
+  "required": ["claim_id", "subject", "claim", "level", "confidence", "provenance", "verification"],
+  "properties": {
+    "claim_id": { "type": "string", "pattern": "^clm_[0-9a-f]{16}$" },
+    "subject": {
+      "type": "string",
+      "description": "The observed thing the claim is about: observation_id, endpoint template, message key, process, export section"
+    },
+    "claim": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": ["semantic_name", "direction", "correlation", "schema", "side_effect", "authentication", "ordering", "existence", "relationship"]
+        },
+        "value": { "type": ["string", "object", "boolean", "null"] }
+      }
+    },
+    "level": {
+      "enum": ["CONFIRMED", "OBSERVED", "STRONGLY_INFERRED", "INFERRED", "HYPOTHESIS", "UNKNOWN"]
+    },
+    "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["class"],
+        "properties": {
+          "class": {
+            "enum": ["captured_traffic", "differential_exclusive", "temporal_correlation", "cross_transport_corroboration", "schema_induction", "field_discrimination", "js_static_analysis", "string_reference", "authoritative_spec", "human_observation_label", "community_source", "llm_proposal"]
+          },
+          "artifact": { "type": "string", "description": "Capture/frame/bundle/spec reference the claim re-derives from" },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "description": "What the machine checked vs what was trusted — always explicit",
+      "required": ["cap_applied", "classes", "verified", "asserted"],
+      "properties": {
+        "cap_applied": { "type": "number", "description": "Max cap across provenance classes" },
+        "classes": { "type": "array", "items": { "type": "string" } },
+        "verified": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["class", "detail"],
+            "properties": {
+              "class": { "type": "string" },
+              "detail": { "type": "string", "description": "What was recomputed and what it produced" }
+            }
+          }
+        },
+        "asserted": { "type": "array", "items": { "type": "string" }, "description": "Classes trusted without recomputation (non-verifiable classes)" }
+      }
+    },
+    "contradictions": {
+      "type": "array",
+      "description": "Links to evidence arguing against this claim; presence marks the claim degraded",
+      "items": { "type": "string" }
+    },
+    "history": {
+      "type": "array",
+      "description": "Previous confidence/provenance/level on revision; downgrades are recorded, never silent",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "created_utc": { "type": "string", "format": "date-time" },
+    "updated_utc": { "type": "string", "format": "date-time" }
+  }
+}
