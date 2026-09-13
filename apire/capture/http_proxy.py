@@ -30,8 +30,31 @@ from urllib.parse import urlsplit  # parsing only; no network use
 from ..errors import TransportError
 
 _MAX_BODY_SAMPLE = 2000
+_MAX_SSE_EVENTS = 500
+_SSE_READ_TIMEOUT = 2.0
 _HOP_BY_HOP = {"connection", "proxy-connection", "keep-alive", "te", "trailer", "upgrade"}
 _READ_TIMEOUT = 30.0
+
+
+def _parse_sse_event(block: str) -> dict | None:
+    """Parse one SSE event block (the text between blank lines)."""
+    fields: dict[str, str] = {}
+    data_lines: list[str] = []
+    for line in block.splitlines():
+        if not line or line.startswith(":"):
+            continue
+        name, _, value = line.partition(":")
+        value = value[1:] if value.startswith(" ") else value
+        if name == "data":
+            data_lines.append(value)
+        elif name in ("event", "id", "retry"):
+            fields[name] = value
+    if not data_lines and not fields:
+        return None
+    event = {**fields}
+    if data_lines:
+        event["data"] = "\n".join(data_lines)[:_MAX_BODY_SAMPLE]
+    return event
 
 
 class _Reader:
@@ -82,6 +105,16 @@ class _Reader:
         out = bytes(self.buf)
         self.buf.clear()
         return out
+
+    def read_some(self) -> bytes:
+        """Buffered bytes if any, else one socket read (caller handles
+        socket.timeout). Streaming relays MUST go through this: header
+        parsing may already have swallowed early body bytes."""
+        if self.buf:
+            out = bytes(self.buf)
+            self.buf.clear()
+            return out
+        return self.conn.recv(65536)
 
     def drain(self) -> bytes:
         out = bytes(self.buf)
@@ -306,6 +339,14 @@ class HttpProxyListener:
             status_line, resp_headers = _split_head(resp_head)
             tokens = status_line.split(" ")
             status = int(tokens[1]) if len(tokens) > 1 and tokens[1].isdigit() else 0
+
+            if "text/event-stream" in _header(resp_headers, "Content-Type").lower():
+                # Streaming responses never complete: relay incrementally and
+                # extract events as they arrive. (Without this branch the proxy
+                # would block until timeout and break the observed app.)
+                self._relay_sse(store, capture_id, client, ureader, status_line, resp_headers, url, split.path or "/")
+                return
+
             resp_body_raw, body_sample = _read_body(ureader, resp_headers, to_eof=True)
 
             client.sendall(_rebuild_head(status_line, resp_headers, drop=set(), force_close=True) + resp_body_raw)
@@ -334,6 +375,70 @@ class HttpProxyListener:
                 upstream.close()
             except OSError:
                 pass
+
+    def _relay_sse(self, store, capture_id: str, client: socket.socket, reader: _Reader, status_line: str, resp_headers, url: str, path: str) -> None:
+        """Relay an event-stream incrementally, extracting complete SSE events
+        on the way. Runs until the stream ends, the client goes away, or the
+        capture stops. Reads go through the reader, never the raw socket: the
+        head read may already have buffered early events (a defect this test
+        caught the first time)."""
+        client.sendall(_rebuild_head(status_line, resp_headers, drop=set(), force_close=True))
+        reader.conn.settimeout(_SSE_READ_TIMEOUT)
+        buffer = ""
+        events: list[dict] = []
+        emitted = 0
+        while not self._stop.is_set():
+            try:
+                block = reader.read_some()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            if not block:
+                break
+            try:
+                client.sendall(block)
+            except OSError:
+                break  # client closed the stream; the relay ends with it
+            buffer += block.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+            while "\n\n" in buffer:
+                raw_event, _, buffer = buffer.partition("\n\n")
+                event = _parse_sse_event(raw_event)
+                if event is not None:
+                    events.append(
+                        {
+                            "kind_hint": "sse_event",
+                            "transport": "http_proxy",
+                            "direction": "server_to_client",
+                            "channel": f"tcp:{url.split('//', 1)[-1].split('/', 1)[0]}",
+                            "payload": {"path": path, "url": url, **event},
+                        }
+                    )
+                    emitted += 1
+                    if len(events) >= 25:
+                        store.append_frames(capture_id, events)
+                        self._stats["frames"] += len(events)
+                        events = []
+            if emitted >= _MAX_SSE_EVENTS:
+                self._stats["errors"].append(f"sse event cap reached for {path}; further events relayed but not recorded")
+                break
+        if buffer.strip():
+            event = _parse_sse_event(buffer)
+            if event is not None:
+                events.append(
+                    {
+                        "kind_hint": "sse_event",
+                        "transport": "http_proxy",
+                        "direction": "server_to_client",
+                        "channel": f"tcp:{url.split('//', 1)[-1].split('/', 1)[0]}",
+                        "payload": {"path": path, "url": url, "incomplete": True, **event},
+                    }
+                )
+        if events:
+            store.append_frames(capture_id, events)
+            self._stats["frames"] += len(events)
+        self._stats["sse_events"] = self._stats.get("sse_events", 0) + emitted
+        self._stats["exchanges"] += 1
 
     @staticmethod
     def _respond(client: socket.socket, status: int, message: str) -> None:

@@ -66,21 +66,87 @@ captures. Zero leaks (redaction audit over stored manifests).
   INFERRED 0.40; the child relation was verified via psutil during recon
   but is not itself a stored claim yet.
 
+## M6 session: response bodies, settled contradiction, audit (2026-09-12)
+
+Capture `cap_5350bc449977` (`devtools_attach/v2`, bodies enabled): 155
+frames, 970 CDP events, **51 response bodies captured** (25 without: 14 over
+the 2 MB fetch cap — the biggest Next.js data files — and 11 pending at
+stop). Two bugs were found and fixed by making this work: a stashed-frame
+double-pop that silently dropped every fetched body, and — caught by the new
+SSE test — a streaming relay that bypassed the reader buffer and skipped
+early events.
+
+### The Unleash-vs-config rivalry is settled by evidence
+
+The captured body of `GET /api/frontend` is
+`{"toggles":[{"name":"sign_in_flow","enabled":true,"variant":{...},
+"impression_data":true}, ...]}` — the Unleash client API format. Disposition:
+
+| Reading | Level | Support |
+| ------- | ----- | ------- |
+| `flstudio.cloud.feature_flags` | **STRONGLY_INFERRED 0.70** | response body shape (`toggles` array), verified `captured_traffic` + `schema_induction` on the response observation |
+| `flstudio.cloud.frontend_config` | INFERRED 0.40 | earlier URL-shape reading only |
+
+Both remain in the graph, linked as contradictions — the rival is settled by
+evidence, not deleted by decree. `api_re_evidence explain` shows the
+asymmetry.
+
+### Other findings from bodies
+
+- **`flstudio.telemetry.sentry` (STRONGLY_INFERRED 0.60)**: the envelope
+  endpoint resolves to `o1373866.ingest.sentry.io` with `sentry_version=7`
+  and a redacted `sentry_key` — Sentry envelope ingestion (project 6685788),
+  a third party under Image-Line's account, not an IL service. Linked to the
+  older `telemetry_envelope` reading as rivals.
+- **`flstudio.cloud.catalog.filter_genre` raised to STRONGLY_INFERRED 0.70**
+  (5007-byte genre-list body; `@body` array representation inducts the item
+  signature).
+- Endpoints returning catalog arrays (genre/instrument/labels) now carry
+  `@body` array shapes with item signatures; the exporters emit real array
+  schemas from them.
+
+### Audit pass (exercised on real data)
+
+- **12 claims** at INFERRED+; three at STRONGLY_INFERRED (above).
+- **64 UNKNOWN observations** — the honest measure; led by
+  `HTTP 200 /waveform/{var}` (44 sightings, unclaimed response side),
+  `OPTIONS /api/frontend` preflights (9), `/online.txt` responses (9),
+  `/g/collect` 204s (8), and the `/_next/data/...` JSON routes. Stated
+  plainly: the reconstruction knows what those endpoints *are* far less than
+  where they can be reached.
+- **One stranded claim flagged**: `clm_1fecad51f822e83f` (the earlier
+  waveform reading) had its subject re-keyed by this session's exact-status
+  change; `explain` now reports `subject_resolves: false` with a re-anchor
+  note instead of pretending. (The re-anchor procedure itself was
+  demonstrated earlier with `clm_6e84cd6c81910b27`.)
+- **Zero secrets** in the new capture: Sentry's `sentry_key` was redacted at
+  ingestion (`<REDACTED>`), verified on the stored manifest.
+
+### Known limitations (stated, not hidden)
+
+- **Multi-host path collisions**: canonical keys for HTTP do not include the
+  host, so `GET /tag` on `search.cloud.image-line.com` and
+  `www.googletagmanager.com` merge into one observation. Evidence:
+  `obs_bf6918062788c2b6` shows one `GET /tag`. Fixing requires keying v2 and
+  re-anchoring existing claims — see ADR-009 for the plan and trigger.
+- 14 responses exceed the 2 MB body-fetch cap (the largest Next.js catalog
+  JSONs); their headers are captured, bodies are not. Raising the cap is a
+  one-line change when a schema question needs those files.
+
 ## Next observations (no human needed)
 
 1. **Native API surface:** FL's OSC server is off by default (no UDP
    sockets; no registry config; empty remote-scripts folder). Enabling it
    requires in-app GUI steps — deferred until a human wants it; the
    WebView path yielded a real surface without it.
-2. **Sharpen the rivals:** `/api/frontend`'s Unleash reading can be
-   confirmed/refuted by looking for Unleash SDK-shaped responses (feature
-   toggle JSON) in a future capture — needs response bodies, which
-   devtools_attach v1 does not fetch (`Network.getResponseBody` is the
-   next transport upgrade).
-3. **Plugin bridges (H3):** load a bridged VST in FL and capture
-   process_meta with a hint matching the bridge process name.
-4. **Path templates:** teach the normalizer to collapse Next.js build-id
-   segments (`/_next/data/<hash>/`) so those routes group.
+2. **Raise preflight noise out of the unknowns**: OPTIONS observations are
+   CORS mechanics, not API surface; a normalizer rule could classify them
+   (deliberate change, re-anchor discipline applies).
+3. **Plugin bridges (H3):** per ADR-008, capture `process_meta` with a hint
+   matching the bridge process and inspect `named_pipes`/`pipe_present`
+   evidence for structure (names, versions) — messages are not observable.
+4. **Ecological control tier** (open5e-api/Gitea) for the benchmark's
+   messier second tier.
 
 ## Campaign protocol (unchanged)
 

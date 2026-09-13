@@ -113,6 +113,8 @@ def shape_to_schema(shape: dict) -> dict:
     """Induced observation shape -> JSON Schema object fragment."""
     props: dict[str, dict] = {}
     for key, entry in shape.items():
+        if key.startswith("@"):
+            continue  # body metadata, not a field
         raw_type = str(entry.get("type", ""))
         variants = [parse_sig(p) for p in _split_top(raw_type, "/") if p.strip()]
         variants = [v for v in variants if v]
@@ -130,6 +132,20 @@ def shape_to_schema(shape: dict) -> dict:
             fragment["examples"] = entry["enum_sample"][:8]
         props[key] = fragment
     return {"type": "object", "properties": props}
+
+
+def body_shape_to_schema(shape: dict) -> dict:
+    """Body schema for a response observation: handles the "@body" array
+    representation (items signature parsed into a real schema) and object
+    bodies alike."""
+    meta = shape.get("@body")
+    if meta and meta.get("type") == "array":
+        items_sig = meta.get("items_sig") or "other"
+        schema = {"type": "array", "items": parse_sig(items_sig)}
+        if meta.get("lengths"):
+            schema["x-apire-lengths-observed"] = meta["lengths"]
+        return schema
+    return shape_to_schema(shape)
 
 
 # ---------------------------------------------------------------- frame context
@@ -182,7 +198,16 @@ def endpoint_rows(store, capture_ids: list[str] | None, claims: dict[str, dict])
         template = o["endpoint_template"]
         method, _, path = template.partition(" ")
         ctx_entry = ctx.get(key, {})
-        claim = claims.get(o["observation_id"])
+        # Claims may sit on the request observation *or* on any of its
+        # response observations (bodies often carry the evidence); the best
+        # supported reading wins, whichever side it was proposed on.
+        response_entries = responses.get(path, [])
+        candidates = [claims.get(o["observation_id"])] + [claims.get(r["observation_id"]) for r in response_entries]
+        candidates = [c for c in candidates if c]
+        claim = max(candidates, key=lambda c: c["confidence"]) if candidates else None
+        evidence = evidence_block(o, claim)
+        if claim:
+            evidence["claim_subject"] = claim["subject"]
         rows.append(
             {
                 "observation_id": o["observation_id"],
@@ -194,8 +219,8 @@ def endpoint_rows(store, capture_ids: list[str] | None, claims: dict[str, dict])
                 "url_example": ctx_entry.get("url", ""),
                 "sightings": o["observation_count"],
                 "shape": o["shape"],
-                "responses": responses.get(path, []),
-                "evidence": evidence_block(o, claim),
+                "responses": response_entries,
+                "evidence": evidence,
             }
         )
     rows.sort(key=lambda r: (-r["sightings"], r["path"]))

@@ -17,6 +17,7 @@ weakened for convenience.
 
 from __future__ import annotations
 
+import base64
 import json
 import socket
 import threading
@@ -28,6 +29,8 @@ from ..errors import TransportError
 _STATIC_EXTS = (".js", ".mjs", ".css", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".map", ".wasm")
 _MAX_WS_PAYLOAD = 4000
 _MAX_POST_DATA = 2000
+_MAX_RESPONSE_BODY = 16384
+_MAX_BODY_FETCH = 2_000_000
 
 
 def _is_static(url: str) -> bool:
@@ -188,22 +191,97 @@ def cdp_event_to_frames(message: dict, channel: str = "") -> list[dict]:
                 },
             }
         ]
+    if method == "Network.webSocketCreated":
+        url = str(params.get("url", "")).split("?", 1)[0]
+        if not url:
+            return []
+        return [
+            {
+                "kind_hint": "ws_frame",
+                "transport": "devtools_attach",
+                "direction": "unspecified",
+                "channel": channel,
+                "payload": {"event": "open", "ws_url": url},
+            }
+        ]
+    if method == "Network.webSocketClosed":
+        return [
+            {
+                "kind_hint": "ws_frame",
+                "transport": "devtools_attach",
+                "direction": "unspecified",
+                "channel": channel,
+                "payload": {"event": "closed"},
+            }
+        ]
+    if method == "Network.webSocketHandshakeResponseReceived":
+        resp = params.get("response", {}) or {}
+        return [
+            {
+                "kind_hint": "ws_frame",
+                "transport": "devtools_attach",
+                "direction": "server_to_client",
+                "channel": channel,
+                "payload": {
+                    "event": "handshake",
+                    "status": resp.get("status", 0),
+                    "headers": resp.get("headers", {}),
+                },
+            }
+        ]
     return []
+
+
+def _body_fetchable(headers: dict, limit: int = _MAX_BODY_FETCH) -> bool:
+    """Fetch a response body only if it can plausibly be small. Absent
+    content-length: attempt (chunked/streamed bodies are exactly what we
+    want to see), over the limit: skip and record the skip."""
+    for name, value in (headers or {}).items():
+        if str(name).lower() == "content-length":
+            try:
+                return int(value) <= limit
+            except (TypeError, ValueError):
+                return True
+    return True
 
 
 class DevtoolsAttachListener:
     transport = "devtools_attach"
-    version = 1
+    # v2 adds opt-in response bodies (Network.getResponseBody, size-capped)
+    # and WebSocket lifecycle events (open/closed/handshake). v1 captures
+    # carried neither — the correlator's instrument guard will flag any
+    # comparison that mixes the two.
+    version = 2
 
     def __init__(self):
         self._ws: websocket.WebSocket | None = None
         self._thread: threading.Thread | None = None
         self._stop = threading.Event()
-        self._stats = {"frames": 0, "events": 0, "dropped": 0, "errors": [], "target": ""}
+        self._bodies = False
+        self._stats = {
+            "frames": 0,
+            "events": 0,
+            "dropped": 0,
+            "errors": [],
+            "target": "",
+            "bodies_skipped": 0,
+            "bodies_pending_at_stop": 0,
+        }
 
-    def start(self, store, capture_id: str, host: str = "127.0.0.1", port: int = 9222, path: str = "", wait_seconds: int = 10, **_) -> dict:
+    def start(
+        self,
+        store,
+        capture_id: str,
+        host: str = "127.0.0.1",
+        port: int = 9222,
+        path: str = "",
+        wait_seconds: int = 10,
+        bodies: bool = False,
+        **_,
+    ) -> dict:
         if self._ws:
             raise TransportError("listener already attached")
+        self._bodies = bool(bodies)
         target = self._wait_for_target(host, port, path, wait_seconds)
         self._stats["target"] = f"{target.get('title', '')} | {target.get('url', '')}"
         try:
@@ -217,12 +295,23 @@ class DevtoolsAttachListener:
         self._stop.clear()
         # Enable network observation. This is the only client->browser message
         # the transport sends: a debugger control command, not app traffic.
-        ws.send(json.dumps({"id": 1, "method": "Network.enable", "params": {"maxTotalBufferSize": 0, "maxResourceBufferSize": 0}}))
+        # Body retrieval requires Chromium's resource buffer, so buffering is
+        # enabled only when bodies were requested.
+        if self._bodies:
+            enable_params = {"maxTotalBufferSize": 50_000_000, "maxResourceBufferSize": 5_000_000}
+        else:
+            enable_params = {"maxTotalBufferSize": 0, "maxResourceBufferSize": 0}
+        ws.send(json.dumps({"id": 1, "method": "Network.enable", "params": enable_params}))
         channel = target.get("url", "")
 
         def loop():
             pending: list[dict] = []
             ws_urls: dict[str, str] = {}
+            pending_responses: dict[str, dict] = {}  # requestId -> stashed response frame
+            in_flight: dict[int, dict] = {}  # command id -> frame awaiting its body
+            body_requests: dict[int, str] = {}  # command id -> requestId
+            cmd_seq = 1
+
             while not self._stop.is_set():
                 try:
                     raw = ws.recv()
@@ -244,21 +333,74 @@ class DevtoolsAttachListener:
                 except json.JSONDecodeError:
                     continue
                 self._stats["events"] += 1
-                if message.get("method") == "Network.webSocketCreated":
+                method = message.get("method")
+
+                # reply to a getResponseBody command: complete the in-flight
+                # frame. (The first implementation looked the frame up in the
+                # stash it had already popped — every fetched body was
+                # silently dropped. Two maps exist so that cannot recur.)
+                if "id" in message and message["id"] in body_requests:
+                    cmd_id = message["id"]
+                    body_requests.pop(cmd_id)
+                    frame = in_flight.pop(cmd_id, None)
+                    if frame is not None:
+                        result = message.get("result") or {}
+                        body = result.get("body") or ""
+                        if result.get("base64Encoded"):
+                            try:
+                                body = base64.b64decode(body).decode("utf-8", errors="replace")
+                            except (ValueError, TypeError):
+                                body = ""
+                        frame["payload"]["body_sample"] = body[:_MAX_RESPONSE_BODY]
+                        frame["payload"]["body_truncated"] = len(body) > _MAX_RESPONSE_BODY
+                        pending.append(frame)
+                    continue
+
+                if method == "Network.webSocketCreated":
+                    wparams = message.get("params") or {}
+                    if wparams.get("requestId") and wparams.get("url"):
+                        ws_urls[wparams["requestId"]] = str(wparams["url"]).split("?", 1)[0]
+
+                if method == "Network.responseReceived" and self._bodies:
                     params = message.get("params") or {}
-                    if params.get("requestId") and params.get("url"):
-                        ws_urls[params["requestId"]] = str(params["url"]).split("?", 1)[0]
-                frames = cdp_event_to_frames(message, channel)
-                rid = (message.get("params") or {}).get("requestId")
-                if rid in ws_urls:
-                    for f in frames:
-                        if f["kind_hint"] == "ws_frame":
-                            f["payload"]["ws_url"] = ws_urls[rid]
-                pending.extend(frames)
+                    frames = cdp_event_to_frames(message, channel)
+                    if frames:
+                        pending_responses[params.get("requestId", "")] = frames[0]
+                else:
+                    frames = cdp_event_to_frames(message, channel)
+                    rid = (message.get("params") or {}).get("requestId")
+                    if rid in ws_urls:
+                        for f in frames:
+                            if f["kind_hint"] == "ws_frame":
+                                f["payload"].setdefault("ws_url", ws_urls[rid])
+                    pending.extend(frames)
+
+                if method in ("Network.loadingFinished", "Network.loadingFailed"):
+                    params = message.get("params") or {}
+                    rid = params.get("requestId")
+                    frame = pending_responses.pop(rid, None) if self._bodies else None
+                    if frame is not None:
+                        if method == "Network.loadingFinished" and _body_fetchable(frame["payload"].get("headers", {})):
+                            cmd_seq += 1
+                            in_flight[cmd_seq] = frame
+                            body_requests[cmd_seq] = rid
+                            ws.send(
+                                json.dumps({"id": cmd_seq, "method": "Network.getResponseBody", "params": {"requestId": rid}})
+                            )
+                        else:
+                            self._stats["bodies_skipped"] += 1
+                            pending.append(frame)
+
                 if len(pending) >= 25:
                     store.append_frames(capture_id, pending)
                     self._stats["frames"] += len(pending)
                     pending = []
+
+            # stop: flush stashed/in-flight responses without bodies (never
+            # drop evidence silently — the counts are reported)
+            self._stats["bodies_pending_at_stop"] = len(pending_responses) + len(in_flight)
+            pending.extend(pending_responses.values())
+            pending.extend(in_flight.values())
             if pending:
                 try:
                     store.append_frames(capture_id, pending)
@@ -268,7 +410,7 @@ class DevtoolsAttachListener:
 
         self._thread = threading.Thread(target=loop, daemon=True, name=f"devtools_attach:{port}")
         self._thread.start()
-        return {"attached": target.get("url", ""), "title": target.get("title", ""), "status": "observing"}
+        return {"attached": target.get("url", ""), "title": target.get("title", ""), "status": "observing", "bodies": self._bodies}
 
     def _wait_for_target(self, host: str, port: int, path_filter: str, wait_seconds: int) -> dict:
         import time

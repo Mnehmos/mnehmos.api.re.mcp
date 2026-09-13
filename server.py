@@ -152,12 +152,14 @@ def api_re_capture(
     port: int = 9000,
     path: str = "",
     hint: str = "",
+    bodies: bool = False,
 ) -> dict:
     """Control observation spans. start begins a capture (requires
     authorization_statement or APIRE_AUTHORIZATION_STATEMENT); label sets the
     experimental condition used by correlation; note anchors a human comment
-    to a frame sequence. One-shot transports (file_ingest, process_meta) stop
-    themselves and return when done."""
+    to a frame sequence. `bodies` (devtools_attach) opts into size-capped
+    response-body capture. One-shot transports (file_ingest, process_meta)
+    stop themselves and return when done."""
     st = store()
     env = Envelope(target=capture_id or "captures", method=f"capture.{action}")
     if action == "start":
@@ -170,7 +172,7 @@ def api_re_capture(
             hypothesis=hypothesis,
             instrument=f"{transport}/v{getattr(listener, 'version', 1)}",
         )
-        status = listener.start(st, cap["capture_id"], host=host, port=port, path=path, hint=hint)
+        status = listener.start(st, cap["capture_id"], host=host, port=port, path=path, hint=hint, bodies=bodies)
         _LISTENERS[cap["capture_id"]] = listener
         one_shot = bool(status.get("one_shot"))
         if one_shot:
@@ -352,24 +354,28 @@ def api_re_evidence(
     min_level: str = "",
     provenance_class: str = "",
     claim_id: str = "",
+    limit: int = 20,
 ) -> dict:
     """The honesty surface: claims with provenance and verification records,
-    open contradictions, uninterpreted observations, and the policy itself."""
+    open contradictions, uninterpreted observations, and the policy itself.
+    `limit` caps query/unknowns listings (the honest default keeps responses
+    inside context budgets)."""
     st = store()
     env = Envelope(target=subject or claim_id or "evidence", method=f"evidence.{action}")
     if action == "query":
-        env.result = {"claims": kb.query(st, subject, min_level, provenance_class)}
+        rows = kb.query(st, subject, min_level, provenance_class)
+        env.result = {"count": len(rows), "claims": rows[:limit], "truncated": len(rows) > limit}
         return env.to_dict()
     if action == "explain":
         env.result = semantics.review(st, claim_id)
         return env.to_dict()
     if action == "contradictions":
         rows = kb.contradictions(st, subject)
-        env.result = {"count": len(rows), "contradictions": rows}
+        env.result = {"count": len(rows), "contradictions": rows[:limit], "truncated": len(rows) > limit}
         return env.to_dict()
     if action == "unknowns":
         rows = kb.unknowns(st)
-        env.result = {"count": len(rows), "unknowns": rows}
+        env.result = {"count": len(rows), "unknowns": rows[:limit], "truncated": len(rows) > limit}
         return env.to_dict()
     if action == "policy":
         env.result = kb.policy()

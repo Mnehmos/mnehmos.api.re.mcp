@@ -1,6 +1,6 @@
 {
  "apire_mcp_candidate": 1,
- "generated_utc": "2026-09-13T00:05:23Z",
+ "generated_utc": "2026-09-13T00:45:58Z",
  "generator": "apire export mcp_candidate",
  "min_level": "INFERRED",
  "candidate_tools": [
@@ -18,11 +18,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 3,
+     "sightings": 6,
      "observation_ids": [
       "obs_e966b0817bc550b5",
       "obs_78917fc9bd4f3ce9",
@@ -46,11 +47,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_d8c8ec9000707352"
      ]
@@ -64,11 +66,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_8015fbf17aad3c93"
      ]
@@ -90,11 +93,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_3503deecad7cddd5"
      ]
@@ -103,50 +107,26 @@
    "best_level": "OBSERVED"
   },
   {
-   "name": "cdn_encoder_cloud_image_line_com",
-   "kind": "http",
-   "description": "capabilities observed on cdn.encoder.cloud.image-line.com",
-   "actions": [
-    {
-     "action": "get_waveform",
-     "http": "GET /waveform/{var}",
-     "evidence": {
-      "level": "OBSERVED",
-      "confidence": 0.8,
-      "claim_id": null,
-      "semantic": null,
-      "captures": [
-       "cap_0144babac9e8"
-      ],
-      "basis": "presence in captured traffic; no semantic claim yet"
-     },
-     "sightings": 22,
-     "observation_ids": [
-      "obs_375311d40e3e40fb"
-     ]
-    }
-   ],
-   "best_level": "OBSERVED"
-  },
-  {
    "name": "flstudio_cloud",
    "kind": "http",
-   "description": "capabilities observed on o1373866.ingest.sentry.io",
+   "description": "capabilities observed on cdn.encoder.cloud.image-line.com",
    "actions": [
     {
      "action": "catalog_filter_genre",
      "http": "GET /filter/genre",
      "evidence": {
-      "level": "INFERRED",
-      "confidence": 0.4,
+      "level": "STRONGLY_INFERRED",
+      "confidence": 0.7,
       "claim_id": "clm_5e6ee196e5afb487",
       "semantic": "flstudio.cloud.catalog.filter_genre",
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
-      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)",
+      "claim_subject": "obs_3512653d2c6c4983"
      },
-     "sightings": 2,
+     "sightings": 4,
      "observation_ids": [
       "obs_3512653d2c6c4983"
      ]
@@ -160,11 +140,13 @@
       "claim_id": "clm_42cf5ccfa9b1641a",
       "semantic": "flstudio.cloud.client_metrics",
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
-      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)",
+      "claim_subject": "obs_0b21355063511704"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_0b21355063511704"
      ]
@@ -178,11 +160,13 @@
       "claim_id": "clm_6ff07a94ce3e49cd",
       "semantic": "flstudio.cloud.connectivity_check",
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
-      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)",
+      "claim_subject": "obs_aab3b5338d7f0e32"
      },
-     "sightings": 3,
+     "sightings": 6,
      "observation_ids": [
       "obs_aab3b5338d7f0e32"
      ]
@@ -196,53 +180,87 @@
       "claim_id": "clm_ae5e71da2ebbde2d",
       "semantic": "flstudio.cloud.content.component_data",
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
-      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)",
+      "claim_subject": "obs_7375b98b7ef01f4a"
      },
-     "sightings": 3,
+     "sightings": 6,
      "observation_ids": [
       "obs_7375b98b7ef01f4a"
      ]
     },
     {
-     "action": "frontend_config",
+     "action": "feature_flags",
      "http": "GET /api/frontend",
      "evidence": {
-      "level": "INFERRED",
-      "confidence": 0.4,
-      "claim_id": "clm_bb8fe91f6413a993",
-      "semantic": "flstudio.cloud.frontend_config",
+      "level": "STRONGLY_INFERRED",
+      "confidence": 0.7,
+      "claim_id": "clm_49d1f28612896812",
+      "semantic": "flstudio.cloud.feature_flags",
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
-      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)",
+      "claim_subject": "obs_60b4d9a1621b1434"
      },
-     "sightings": 3,
+     "sightings": 6,
      "observation_ids": [
       "obs_60b4d9a1621b1434"
      ]
     },
     {
-     "action": "telemetry_envelope",
-     "http": "POST /api/{var}/envelope/",
+     "action": "waveform_render",
+     "http": "GET /waveform/{var}",
      "evidence": {
       "level": "INFERRED",
       "confidence": 0.4,
-      "claim_id": "clm_ffe9aa2e1d7819b7",
-      "semantic": "flstudio.cloud.telemetry_envelope",
+      "claim_id": "clm_6e84cd6c81910b27",
+      "semantic": "flstudio.cloud.waveform_render",
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
-      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)",
+      "claim_subject": "obs_375311d40e3e40fb"
      },
-     "sightings": 4,
+     "sightings": 44,
+     "observation_ids": [
+      "obs_375311d40e3e40fb"
+     ]
+    }
+   ],
+   "best_level": "STRONGLY_INFERRED"
+  },
+  {
+   "name": "flstudio_telemetry",
+   "kind": "http",
+   "description": "capabilities observed on o1373866.ingest.sentry.io",
+   "actions": [
+    {
+     "action": "sentry",
+     "http": "POST /api/{var}/envelope/",
+     "evidence": {
+      "level": "STRONGLY_INFERRED",
+      "confidence": 0.6,
+      "claim_id": "clm_119210dfe7c7783c",
+      "semantic": "flstudio.telemetry.sentry",
+      "captures": [
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
+      ],
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)",
+      "claim_subject": "obs_dd8c77c11a7746e8"
+     },
+     "sightings": 8,
      "observation_ids": [
       "obs_e49b46073fd98ba7"
      ]
     }
    ],
-   "best_level": "INFERRED"
+   "best_level": "STRONGLY_INFERRED"
   },
   {
    "name": "search_cloud_image_line_com",
@@ -258,11 +276,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_fdad40f70cf34822"
      ]
@@ -276,11 +295,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_d1c3c2d24837b539"
      ]
@@ -294,11 +314,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 2,
+     "sightings": 4,
      "observation_ids": [
       "obs_51556d3083ed5679"
      ]
@@ -312,11 +333,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_29f0510560120d14"
      ]
@@ -330,11 +352,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_2459eb078652f172"
      ]
@@ -348,11 +371,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_bf6918062788c2b6"
      ]
@@ -366,11 +390,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 2,
+     "sightings": 4,
      "observation_ids": [
       "obs_3560c24997791223"
      ]
@@ -384,11 +409,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_a3f2433ed65cafc8"
      ]
@@ -402,11 +428,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_d239b76a1937d5b1"
      ]
@@ -420,11 +447,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 2,
+     "sightings": 4,
      "observation_ids": [
       "obs_288e93857cb4e4a7"
      ]
@@ -438,11 +466,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_86eb0dd80e95d879"
      ]
@@ -456,11 +485,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_3a1dba2e2d8a0ade"
      ]
@@ -474,11 +504,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_1ffe0642334f510c"
      ]
@@ -492,11 +523,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_21b926c7199e864e"
      ]
@@ -518,11 +550,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_c6007a987c1bc84b"
      ]
@@ -554,11 +587,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 2,
+     "sightings": 4,
      "observation_ids": [
       "obs_d4c647cc4c8ca283"
      ]
@@ -572,11 +606,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 3,
      "observation_ids": [
       "obs_c2eaf814bdc14d13"
      ]
@@ -590,11 +625,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 2,
+     "sightings": 4,
      "observation_ids": [
       "obs_d7ed46164750df88"
      ]
@@ -608,11 +644,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 2,
+     "sightings": 4,
      "observation_ids": [
       "obs_9c553cb45d22a8cf"
      ]
@@ -626,11 +663,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 2,
+     "sightings": 4,
      "observation_ids": [
       "obs_b44fee6d0a71620e"
      ]
@@ -644,11 +682,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_22a577178b28230b"
      ]
@@ -670,11 +709,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 3,
+     "sightings": 6,
      "observation_ids": [
       "obs_b43dfdf7fe18a48d"
      ]
@@ -688,11 +728,12 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 2,
      "observation_ids": [
       "obs_c4a61e8ec6a24b3c"
      ]
@@ -714,13 +755,15 @@
       "claim_id": null,
       "semantic": null,
       "captures": [
-       "cap_0144babac9e8"
+       "cap_0144babac9e8",
+       "cap_5350bc449977"
       ],
       "basis": "presence in captured traffic; no semantic claim yet"
      },
-     "sightings": 1,
+     "sightings": 3,
      "observation_ids": [
-      "obs_494e3ef5d2d87fdf"
+      "obs_494e3ef5d2d87fdf",
+      "obs_a648ef5bb38be3e1"
      ]
     }
    ],

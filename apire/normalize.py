@@ -109,13 +109,18 @@ def observation_key_for_frame(frame: dict) -> str:
         return canonical_key(kind, transport, method, path_template(path), shape)
     if kind == "http_response":
         path = str(payload.get("path", "/"))
-        status_class = str(payload.get("status", 0))[:1] + "xx"
-        return canonical_key(kind, transport, "", path_template(path), status_class)
+        # Exact status, not status class: a 204 and a 200-with-body on the
+        # same path are different observable behaviors, and the body only
+        # exists for one of them.
+        return canonical_key(kind, transport, "", path_template(path), str(payload.get("status", 0)))
     if kind == "osc_message":
         return canonical_key(kind, transport, "", str(payload.get("address", "/unknown")), str(payload.get("types", "")))
     if kind == "ws_frame" and payload.get("ws_url"):
         # DevTools-attached WS frames are stamped with their connection URL;
-        # each connection is its own observable behavior.
+        # each connection is its own observable behavior. Lifecycle events
+        # (open/closed/handshake) key separately from data frames.
+        if payload.get("event"):
+            return canonical_key(kind, transport, "", f"{payload['ws_url']}:{payload['event']}", "")
         return canonical_key(kind, transport, "", str(payload["ws_url"]), str(payload.get("opcode", "")))
     if kind == "process_meta":
         event = str(payload.get("event", "unknown"))
@@ -170,8 +175,21 @@ def observation_from_group(key: str, frames: list[dict]) -> dict:
         # Prefer the *decoded body* for schema induction: the payload shell
         # (path/status/headers) is transport plumbing, the body is the API.
         parsed = [p for p in (_parse_json_sample(pl.get("body_sample")) for pl in payloads) if p is not None]
-        if parsed:
-            shape = _induce_shape(parsed)
+        dicts = [p for p in parsed if isinstance(p, dict)]
+        arrays = [p for p in parsed if isinstance(p, list)]
+        if dicts:
+            shape = _induce_shape(dicts)
+        elif arrays:
+            # Array bodies record their nature and item signature under a
+            # "@body" metadata key (fields would be a lie: there are none).
+            items = [it for lst in arrays for it in lst if isinstance(it, dict)]
+            shape = {
+                "@body": {
+                    "type": "array",
+                    "items_sig": (shape_signature(items[0])[:200] if items else "other"),
+                    "lengths": sorted({len(lst) for lst in arrays})[:8],
+                }
+            }
         statuses = {str(pl.get("status")) for pl in payloads if pl.get("status") not in (None, 0)}
         if len(statuses) == 1:
             shape = {"status": {"type": "number", "constant": int(next(iter(statuses)))}} | shape

@@ -81,6 +81,24 @@ def test_unknown_events_are_ignored_not_guessed():
     assert dt.cdp_event_to_frames({}) == []
 
 
+def test_ws_lifecycle_events_map_distinctly():
+    created = dt.cdp_event_to_frames({"method": "Network.webSocketCreated", "params": {"url": "wss://x/events?s=1"}})
+    assert created[0]["payload"] == {"event": "open", "ws_url": "wss://x/events"}
+    closed = dt.cdp_event_to_frames({"method": "Network.webSocketClosed", "params": {"requestId": "1"}})
+    assert closed[0]["payload"]["event"] == "closed"
+    hs = dt.cdp_event_to_frames(
+        {"method": "Network.webSocketHandshakeResponseReceived", "params": {"response": {"status": 101, "headers": {"upgrade": "websocket"}}}}
+    )
+    assert hs[0]["payload"]["event"] == "handshake" and hs[0]["payload"]["status"] == 101
+
+
+def test_body_fetch_decision_respects_size_cap():
+    assert dt._body_fetchable({}) is True, "no content-length: attempt the fetch"
+    assert dt._body_fetchable({"Content-Length": "2048"}) is True
+    assert dt._body_fetchable({"content-length": str(dt._MAX_BODY_FETCH + 1)}) is False
+    assert dt._body_fetchable({"Content-Length": "not-a-number"}) is True
+
+
 def test_http_get_json_against_local_socket_server():
     """Exercises the raw socket GET (urllib.request is banned) without CDP."""
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -117,8 +135,9 @@ def test_live_attach_observes_events(tmp_path):
     auth = "live test: designated debug channel"
     cap = store.start_capture(transport="devtools_attach", authorization_statement=auth)
     listener = dt.DevtoolsAttachListener()
-    info = listener.start(store, cap["capture_id"], wait_seconds=3)
+    info = listener.start(store, cap["capture_id"], wait_seconds=3, bodies=True)
     assert info["status"] == "observing"
+    assert info["bodies"] is True
     import time
 
     time.sleep(6)
@@ -129,3 +148,4 @@ def test_live_attach_observes_events(tmp_path):
     # attach succeeded and stats are coherent.
     assert stats["target"]
     assert stats["frames"] == len(frames)
+    assert "bodies_pending_at_stop" in stats

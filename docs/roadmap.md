@@ -108,15 +108,15 @@ reported; a second opinion pass reviews the mcp_candidate output.
 
 ## M6 — WS/SSE + attach transports; FL Studio campaign
 
-**Status: substantially landed 2026-09-12** — `devtools_attach` (WebView2
-attach), `http_proxy`, and `log_tail` are live; `pipe_listen` was removed
-from the vocabulary after investigation showed passive pipe interception is
-infeasible without injection (ADR-008) — pipe presence/naming is observed
-through `process_meta` instead. OSC remains blocked on an in-app enable
-(human step). Also pending from the campaign: response bodies via
-`Network.getResponseBody` (the upgrade that would let the evidence settle
-the Unleash-vs-config rival readings) and WS/SSE-dedicated normalizers
-(WS frames already traverse the pipeline via devtools_attach).
+**Status: done 2026-09-12 (OSC excepted, human-gated).** Transports:
+`devtools_attach` v2 (response bodies via `Network.getResponseBody`,
+size-capped; WS lifecycle events open/closed/handshake), `http_proxy` (with
+streaming SSE relay and event extraction), `log_tail`; `pipe_listen` removed
+by ADR-008. Campaign: bodies settled the Unleash-vs-config rivalry (evidence
+in targets/fl-studio/README.md), three claims at STRONGLY_INFERRED, an audit
+pass with 12 claims / 64 unknowns / one stranded claim flagged, and the
+honest measure published. Known limits recorded: ADR-009 (host in keys),
+2 MB body-fetch cap.
 
 - WS + SSE normalizers; the `devtools_attach` transport (browser targets) and
   `log_tail` landed early; named-pipe interception reframed by ADR-008

@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.4.0 — 2026-09-12
+
+M6 complete (OSC excepted, human-gated). 74 tests + 17-check wire test.
+
+### Added
+
+- `devtools_attach` v2: opt-in, size-capped response bodies via
+  `Network.getResponseBody` (in-flight command tracking; frames are stashed
+  at `responseReceived` and completed when the body arrives; stop-flush
+  reports anything incomplete), and WebSocket lifecycle events
+  (open/closed/handshake) keyed per connection.
+- `http_proxy`: streaming SSE relay — event-stream responses are relayed
+  incrementally (never waited to EOF, which would break the observed app)
+  and each complete event becomes an `sse_event` frame.
+- Normalizer: responses key by **exact status** (204 vs 200-with-body are
+  different behaviors); response bodies induct from decoded JSON, with an
+  `@body` metadata representation for array bodies (item signature +
+  observed lengths) that the exporters turn into real array schemas.
+- `api_re_evidence` gained a `limit` (default 20) after the unknowns listing
+  exceeded context on real data.
+- `api_re_evidence explain` now reports `subject_resolves`: a claim whose
+  observation was re-keyed by a normalizer change is visibly stranded with a
+  re-anchor note instead of pretending.
+- ADR-009: host belongs in HTTP canonical keys — deferred with a plan,
+  evidence (`GET /tag` merged across two hosts), and the re-anchor
+  procedure recorded.
+
+### Fixed (all found by dogfooding)
+
+- Body fetch silently dropped every fetched frame (stash popped twice; the
+  reply handler looked in a map the loadingFinished branch had emptied).
+- SSE relay skipped early events by reading the raw socket while the header
+  parse had already buffered them — the same buffer discipline `_Reader`
+  exists for, violated in a new place; its test now pins it.
+- SSE event splitting assumed LF line endings; wire format is CRLF.
+
+### FL Studio
+
+- The Unleash-vs-frontend_config rivalry is settled by captured evidence:
+  `/api/frontend` returns `{"toggles":[...]}`, so `flstudio.cloud.feature_flags`
+  rises to STRONGLY_INFERRED 0.70; the rival stays linked at INFERRED 0.40.
+- The envelope endpoint is Sentry (`o1373866.ingest.sentry.io`), captured
+  with its key redacted: `flstudio.telemetry.sentry` @ STRONGLY_INFERRED.
+- Audit published in targets/fl-studio/README.md: 12 claims, 64 unknowns,
+  stranded claims flagged, zero secrets.
+
 ## 0.3.0 — 2026-09-12
 
 M2 complete: loopback proxy + control benchmark. 69 tests + 17-check wire test.

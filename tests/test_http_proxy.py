@@ -13,6 +13,7 @@ import json
 import socket
 import sys
 import threading
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -132,6 +133,52 @@ def test_unreachable_origin_yields_502(rig):
     assert status == 502
     frames = store.frames(cap_id)
     assert any(f["payload"].get("status") == 502 for f in frames), "the failed exchange is still recorded"
+
+
+def test_sse_stream_relays_incrementally_and_records_events(tmp_path):
+    """An event-stream response must relay as it flows (no waiting for EOF)
+    and each complete event must become an sse_event frame."""
+    raw = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    raw.bind(("127.0.0.1", 0))
+    raw.listen(1)
+    origin_port = raw.getsockname()[1]
+
+    def serve():
+        conn, _ = raw.accept()
+        conn.recv(65536)
+        conn.sendall(
+            b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\n\r\n"
+            b"event: tick\r\ndata: {\"n\": 1}\r\n\r\n"
+            b"event: tick\r\ndata: {\"n\": 2}\r\n\r\n"
+        )
+        time.sleep(0.5)
+        conn.sendall(b"data: {\"n\": 3}\r\n\r\n")
+        conn.close()
+        raw.close()
+
+    threading.Thread(target=serve, daemon=True).start()
+    store = Store(root=tmp_path)
+    cap = store.start_capture(transport="http_proxy", authorization_statement=AUTH)
+    listener = HttpProxyListener()
+    listener.start(store, cap["capture_id"], port=0)
+    proxy_port = listener._sock.getsockname()[1]
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", proxy_port, timeout=10)
+        conn.request("GET", f"http://127.0.0.1:{origin_port}/events")
+        resp = conn.getresponse()
+        assert resp.status == 200
+        body = resp.read().decode()
+        conn.close()
+        assert body.count("data:") == 3, body
+        time.sleep(0.4)  # allow the relay thread to flush the final event
+    finally:
+        listener.stop()
+        store.stop_capture(cap["capture_id"])
+    frames = [f for f in store.frames(cap["capture_id"]) if f["kind_hint"] == "sse_event"]
+    assert len(frames) == 3, frames
+    assert frames[0]["payload"]["event"] == "tick"
+    assert frames[2]["payload"]["data"] == '{"n": 3}'
+    assert frames[0]["payload"]["path"] == "/events"
 
 
 def test_chunked_response_relays_intact(tmp_path):

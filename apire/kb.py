@@ -19,7 +19,6 @@ from datetime import datetime, timezone
 
 from . import correlate
 from .errors import PolicyError
-from .normalize import shape_signature
 
 LEVELS = [
     ("CONFIRMED", 0.95, 1.00),
@@ -122,10 +121,15 @@ def _verify_class(store, subject: str, prov: dict) -> tuple[bool, str]:
             return True, f"{len(after)} sighting(s) follow seq {after_seq} in {capture_id}"
         return False, f"no sighting of {subject} follows seq {after_seq} in {capture_id}"
     if cls == "schema_induction":
-        obs = store.find_observation(subject if subject.startswith("obs_") else "")
+        # Verify the *cited artifact* when it is an observation: a claim whose
+        # evidence points elsewhere must not be satisfied by the subject.
+        target = artifact if artifact.startswith("obs_") else subject
+        obs = store.find_observation(target)
         if obs is None:
-            return False, f"subject {subject} not found as an observation"
-        return True, f"induced shape recomputed live: sig {shape_signature(obs['shape'])[:40]}"
+            return False, f"observation {target} not found (schema_induction needs a live observation)"
+        if not obs.get("shape"):
+            return False, f"observation {target} carries no induced shape"
+        return True, f"shape recomputed from {obs['observation_count']} sighting(s), {len(obs['shape'])} field(s)"
     # Non-recomputable classes this far: recorded as asserted, never verified.
     return True, f"class '{cls}' is asserted, not recomputed (no verifier yet)"
 

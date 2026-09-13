@@ -1,72 +1,64 @@
-# Session handoff — 2026-09-12 (build-out session: M5 + M2 + benchmark + transports)
+# Session handoff — 2026-09-12 (M6: bodies, SSE, FL audit)
 
 ## Session metadata
 
 - Branch: main
-- Last commit: M2 remainder + control benchmark + log_tail + ADR-008
-- Test status: `71 passed` (pytest, incl. the control benchmark in CI) and
-  `17 passed, 0 failed` (tests/wire_test.py)
+- Last commit: feat: M6 — response bodies, SSE relay, FL claim audit
+- Test status: `74 passed` (pytest, incl. benchmark) and `17 passed, 0
+  failed` (tests/wire_test.py)
 
 ## Current state
 
-Everything in the roadmap is now landed except the items listed under
-"Blocked / deferred" below:
+M0–M6 complete; only OSC remains and it needs a human (in-app enable in
+FL's settings). This session:
 
-- **M5 exporters** (committed f625529): openapi, asyncapi, json_schema,
-  protocol_spec, architecture, mcp_candidate — per-element `x-apire`
-  evidence, `min_level` floors with speculative sections, no-secret audit.
-  FL specimen committed at `targets/fl-studio/exports/mcp_candidate.json`.
-- **M2 loopback proxy**: `apire/capture/http_proxy.py`, 6 tests (relay both
-  ways, redaction passthrough, CONNECT refused, 502, chunked intact).
-  Body-aware induction: responses now induct from decoded JSON bodies;
-  OpenAPI/JSON Schema carry response-body schemas.
-- **Control benchmark**: `targets/control/reference_app/` + `score.py`,
-  running in CI. First results: endpoint recall/precision 1.000, method
-  accuracy 1.000, schema property P/R 0.75/0.75 (the missing quarter is the
-  planted `created_at`/`created_ts` discrepancy, correctly flagged), zero
-  secrets. `tests/test_benchmark.py` gates it.
-- **log_tail** transport + tests (follows from end, truncation-safe).
-- **Named pipes reframed (ADR-008)**: `pipe_listen` removed from the
-  vocabulary — a pipe can only be read by its server, so passive
-  interception is impossible without injection. Pipe *names/presence* are
-  observed via `process_meta` (new `named_pipes` + `pipe_present` events).
-- **no-egress scanner made precise**: `urllib.parse` no longer flagged
-  (pure parsing); `from urllib import request` now correctly flagged; a
-  dedicated precision test pins both directions.
+- `devtools_attach` v2: response bodies (opt-in `bodies=true`, 2 MB fetch
+  cap, 16 KB sample, in-flight command tracking, stop-flush accounting) and
+  WS lifecycle events. Two bugs found and fixed by dogfooding (see
+  CHANGELOG 0.4.0).
+- `http_proxy`: SSE streams relay incrementally and yield `sse_event`
+  frames; two more bugs caught by the new test (buffer bypass, CRLF).
+- Normalizer: exact-status response keys; `@body` array representation;
+  exporters emit real array schemas.
+- FL: capture `cap_5350bc449977` (bodies), the Unleash-vs-config rivalry
+  **settled by evidence** (toggles JSON), Sentry identified, three claims at
+  STRONGLY_INFERRED, audit published (12 claims / 64 unknowns / 1 stranded
+  claim flagged). Details: targets/fl-studio/README.md.
 
 ## Decision log
 
-- Response observations induct from the decoded body, `status` stripped
-  from body schemas (it is transport, and it was polluting precision).
-- The proxy enforces `Connection: close` hop-by-hop; CONNECT is refused and
-  recorded (an opaque tunnel is unobservable — refuse, don't pretend).
-- `_Reader` exists because the first proxy implementation lost body bytes
-  between head and body reads — caught by tests, recorded in the module
-  docstring.
-- The benchmark scores the *response body* def for schema metrics; request
-  defs remain for request-shape evidence.
+- Response keys moved from status-class to exact status mid-session: it
+  immediately revealed `HTTP 200 /api/frontend` (toggles) as distinct from
+  its 204/OPTIONS siblings. Cost: it stranded the earlier sentry claim
+  reference (policy refused my stale id — visible in the session log) and
+  one INFERRED claim now shows `subject_resolves: false`. Both are the
+  documented re-anchor case, not corruption.
+- `@body` array representation chosen over fabricating field names: an
+  array body has no fields, and lying about that would poison schema
+  exports.
+- Host-in-keys deferred (ADR-009) with evidence and plan; the missing piece
+  (normalizer version in KB header) is recorded there as part of the plan.
+- SSE handled in the proxy rather than deferred: without it the proxy
+  breaks the observed app on event-stream responses (correctness, not
+  feature).
 
-## Blocked / deferred (with reason)
+## Deferred / human-gated
 
-- **OSC (FL H1)**: requires in-app GUI enablement — human step.
-- **`Network.getResponseBody`** for devtools_attach: next upgrade; would let
-  the evidence settle the Unleash-vs-frontend_config rival readings.
-- **WS/SSE dedicated normalizers**: WS frames already traverse the pipeline
-  (devtools_attach stamps ws_url); SSE arrives via proxy body samples.
-  Nothing blocks on this; revisit when a target actually uses SSE.
-- **Ecological control tier** (open5e-api/Gitea): M5+ optional tier.
-- **FL campaign audit session**: a fresh session should attack the
-  STRONGLY_INFERRED+ FL claims before any of them is presented as settled.
+- OSC (H1): in-app enable.
+- ADR-009 keying v2 + re-anchor pass: deliberate isolated change.
+- 2 MB body-fetch cap: raise when a schema question needs the big Next.js
+  JSONs.
+- Ecological benchmark tier (open5e-api/Gitea).
 
 ## Known blockers
 
-None technical.
+None technical. FL Studio is running with the debug port enabled.
 
 ## Next step (exactly one)
 
-Implement `Network.getResponseBody` capture (opt-in, size-capped) in
-`devtools_attach`, then re-run the FL-Cloud load capture and check whether
-the Unleash-vs-config contradiction resolves by response shape.
+Implement ADR-009 (host in HTTP canonical keys) with the KB normalizer
+version bump, then re-anchor every claim whose `explain` reports
+`subject_resolves: false` — the stranded set is currently one claim.
 
 ## CLAUDE.md changed?
 
@@ -75,9 +67,8 @@ the Unleash-vs-config contradiction resolves by response shape.
 ## Runtime handoff fields
 
 - Source of truth: capture store (`apire_kb/`, machine-local, gitignored)
-- Allowed tools: 7 `api_re_*`; transports are the six in
-  `apire/capture/__init__.py`; no transmission action exists
-- Prohibited actions: any send/replay — enforced by tests/test_no_egress.py
-  (now module-path precise) and tests/test_tool_surface.py
-- Pending validations: FL claim audit (above)
+- Allowed tools: 7 `api_re_*`; six transports; no transmission action exists
+- Prohibited actions: any send/replay — tests/test_no_egress.py,
+  tests/test_tool_surface.py
+- Pending validations: ADR-009 re-anchor pass (above)
 - Commit status: clean tree after this session's commit

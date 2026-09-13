@@ -59,22 +59,34 @@ def review(store, claim_id: str) -> dict:
     corroboration = [
         v for v in claim["verification"]["verified"] if v["class"] not in ("captured_traffic",)
     ]
-    return {
-        "claim": claim,
-        "standing": {
-            "level": claim["level"],
-            "confidence": claim["confidence"],
-            "cap": claim["verification"]["cap_applied"],
-            "what_would_raise_it": (
-                "corroborating labeled captures under a different condition label "
-                "(differential_exclusive), or a second independent transport "
-                "(cross_transport_corroboration)"
-            ),
-            "what_would_lower_it": "a capture showing the subject under a contradicting condition",
-            "corroborating_verifications": len(corroboration),
-            "contradictions": claim.get("contradictions", []),
-        },
+    # A claim whose subject no longer resolves (normalizer/version change
+    # re-keyed the observations) is stranded: still visible, no longer
+    # re-verifiable. Say so instead of pretending.
+    subject = claim["subject"]
+    resolves = None
+    if subject.startswith("obs_"):
+        resolves = store.find_observation(subject) is not None
+    standing = {
+        "level": claim["level"],
+        "confidence": claim["confidence"],
+        "cap": claim["verification"]["cap_applied"],
+        "what_would_raise_it": (
+            "corroborating labeled captures under a different condition label "
+            "(differential_exclusive), or a second independent transport "
+            "(cross_transport_corroboration)"
+        ),
+        "what_would_lower_it": "a capture showing the subject under a contradicting condition",
+        "corroborating_verifications": len(corroboration),
+        "contradictions": claim.get("contradictions", []),
+        "subject_resolves": resolves,
     }
+    if resolves is False:
+        standing["subject_note"] = (
+            "subject observation no longer resolves against the current store "
+            "(a normalizer or instrument change re-keyed observations). The claim is "
+            "stranded: re-anchor it by proposing against the current observation."
+        )
+    return {"claim": claim, "standing": standing}
 
 
 def link(store, claim_id: str, related_claim_ids: list[str]) -> dict:

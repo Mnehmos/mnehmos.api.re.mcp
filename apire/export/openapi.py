@@ -8,7 +8,7 @@ to `x-apire.speculative` instead of posing as observed fact.
 
 from __future__ import annotations
 
-from .common import DEFAULT_FLOOR, endpoint_rows, hosts, shape_to_schema, split_by_floor, utcnow
+from .common import DEFAULT_FLOOR, body_shape_to_schema, endpoint_rows, hosts, shape_to_schema, split_by_floor, utcnow
 
 
 def _path_parameters(path: str) -> tuple[str, list[dict]]:
@@ -59,7 +59,7 @@ def openapi_document(store, capture_ids: list[str] | None = None, min_level: str
                 }
                 body_shape = {k: v for k, v in (resp.get("shape") or {}).items() if k != "status"}
                 if body_shape:
-                    entry["content"] = {"application/json": {"schema": shape_to_schema(body_shape)}}
+                    entry["content"] = {"application/json": {"schema": body_shape_to_schema(body_shape)}}
                 operation["responses"][resp["status"]] = entry
         else:
             operation["responses"]["default"] = {"description": "no response observed in the captured window"}

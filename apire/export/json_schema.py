@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .common import DEFAULT_FLOOR, claims_by_subject, endpoint_rows, message_rows, shape_to_schema, slug, split_by_floor, utcnow
+from .common import DEFAULT_FLOOR, body_shape_to_schema, claims_by_subject, endpoint_rows, message_rows, shape_to_schema, slug, split_by_floor, utcnow
 
 
 def json_schema_document(store, capture_ids: list[str] | None = None, min_level: str = DEFAULT_FLOOR) -> dict:
@@ -42,7 +42,7 @@ def json_schema_document(store, capture_ids: list[str] | None = None, min_level:
                 {
                     "title": f"{resp_key}",
                     "description": f"observed response body for {row.get('method', '')} {row.get('path', '')} ({resp['status']})",
-                    **shape_to_schema(body_shape),
+                    **body_shape_to_schema(body_shape),
                     "x-apire": {"observation_id": resp["observation_id"], "basis": "observed response body sample"},
                 },
             )
