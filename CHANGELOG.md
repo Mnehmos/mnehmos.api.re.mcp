@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.4.1 — 2026-09-12
+
+Operator tooling + hypothesis H1 falsified.
+
+### Added
+
+- `targets/fl-studio/operator_gui.py` — the human role, automated
+  (activate/click/type/screenshot; one process per act-and-observe cycle,
+  because window focus is stolen back within a second otherwise). Not part
+  of the engine; requires pyautogui, which is deliberately not a server
+  dependency.
+- `targets/fl-studio/ocr.ps1` — perception without a vision model: the
+  built-in Windows OCR engine, printing text with pixel bounding boxes so
+  coordinates can be clicked. Line mode and word mode.
+
+### Findings
+
+- **H1 falsified: FL Studio 26.1.6 has no OSC support.** Evidence (four
+  independent lines, recorded in
+  `targets/fl-studio/evidence/h1-osc-falsified/`): all ten Settings tabs
+  checked (MIDI, Audio, General, File, Theme, Project, Info, Debug,
+  Account, About) — no OSC anywhere; zero protocol-OSC strings in the
+  engine's UI vocabulary (only oscillator labels); a 25-minute passive
+  listen on 127.0.0.1:9000 (`cap_a1c3b532188b`) recorded 0 frames during
+  active UI use; no UDP sockets ever observed on FL64.
+- The computer-use plugin's host requires ZCode's permission-broker
+  socket; rather than speak that private protocol, the operator tooling
+  above was used — same authority, no boundary bypassed.
+
 ## 0.4.0 — 2026-09-12
 
 M6 complete (OSC excepted, human-gated). 74 tests + 17-check wire test.

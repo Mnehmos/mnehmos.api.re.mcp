@@ -44,7 +44,10 @@ FL's settings). This session:
 
 ## Deferred / human-gated
 
-- OSC (H1): in-app enable.
+- **OSC: falsified, no longer human-gated.** FL 26.1.6 has no OSC support
+  (all ten Settings tabs checked, engine string table silent, 25-minute
+  passive listen recorded 0 frames). Evidence in
+  targets/fl-studio/evidence/h1-osc-falsified/.
 - ADR-009 keying v2 + re-anchor pass: deliberate isolated change.
 - 2 MB body-fetch cap: raise when a schema question needs the big Next.js
   JSONs.

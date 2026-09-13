@@ -1,0 +1,96 @@
+ 1630,    8- 1663,   17  346 MB
+    9,   14-  293,   26  FILE EDIT ADD PATTERNS VIEW OPTIONS TOOLS HELP
+  326,    8-  354,   19  (Trial)
+  327,   24-  452,   35  System / miscellaneous
+  307,   78-  353,   86  STARRED
+  714,   14-  734,   27  1 30
+  717,   81-  859,   94  System / miscellaneous
+ 1068,  113- 1107,  126  Debug
+ 1130,  113- 1180,  123  Account
+ 1237,   15- 1257,   24  Line
+ 1203,  113- 1240,  123  About
+ 1712,    8- 1809,   17  cg,'D9 save off
+ 1712,   22- 1799,   31  All Plugins Edition
+   22,   48-   93,   59  t Browser
+   21,   78-  171,   86  ALL PROJECT PLUGINS
+   39,  106-  132,  117  Current project
+   40,  129-  110,  140  Recent files
+   20,  154-  136,  166  4: Plugin database
+   20,  181-  125,  193  4: Plugin presets
+   39,  208-  137,  219  Channel presets
+   40,  235-  122,  246  Mixer presets
+   39,  262-   78,  273  Scores
+   38,  287-   73,  298  Audio
+   40,  310-   81,  325  Backup
+   20,  334-  154,  346  Cn Channel envelopes
+   20,  357-  129,  369  Cn Clipboard files
+   20,  380-  126,  392  Cn Demo projects
+   20,  403-  100,  415  Cn Envelopes
+   18,  426-   90,  436  a FL Cloud
+   20,  449-   93,  461  Cn Impulses
+   40,  471-   66,  482  Misc
+   20,  495-  109,  507  Cn My projects
+   40,  517-   71,  528  Packs
+   20,  541-  122,  553  Cn Project bones
+   18,  564-   95,  575  + Recorded
+   18,  585-   96,  594  + Rendered
+   18,  610-  114,  621  + Sliced audio
+   39,  632-  107,  643  Soundfonts
+   20,  656-   81,  668  Cn Speech
+   20,  679-   99,  691  Cn Templates
+   39,  701-   96,  712  User data
+  188,   78-  233,   86  PRESETS
+  250,   78-  290,   86  SOUNDS
+  634,   80-  703,   93  O Settings
+  639,  113-  795,  123  MIDl Audio General
+  820,  113-  904,  123  File Theme
+  663,  155-  870,  167  Display (requires a restart to take effect)
+  745,  184-  855,  195  ? Main GU I scaling
+  675,  185-  711,  196  System
+  673,  205-  893,  214  Define I inch 2.54 cm or set display's PPI
+  677,  221-  833,  231  (96 PPI/advised scaling: 100%)
+  942,  113-  984,  126  Project
+ 1007,  113- 1030,  123  Info
+  676,  270-  700,  279  Main
+  676,  298-  700,  307  Main
+  745,  271-  827,  282  Pop-ups scaling
+  745,  298-  827,  307  Toolbars scaling
+  745,  328-  854,  339  Transparent windows
+  676,  356-  748,  365  Make it pretty
+  745,  384-  801,  396  Smoothing
+  676,  413-  739,  422  Ultrasmooth
+  674,  460-  757,  475  (e) High visibility
+  807,  356-  865,  365  Animations
+  807,  413-  923,  422  Animation refresh rate
+  981,  413- 1053,  421  Force refreshes
+  980,  434- 1072,  445  Transparent menus
+  663,  503-  883,  514  Language (requires a restart to take effect)
+  676,  531-  760,  543  English (US) (en)
+  676,  560-  711,  572  English
+  856,  532-  906,  543  Language
+  856,  561-  918,  569  Note names
+  675,  589-  731,  601  Sharps - #
+  777,  589-  836,  598  Black notes
+  696,  618-  784,  630  Update languages
+  663,  660-  689,  671  Input
+  676,  688-  779,  697  Mufti-button mouse
+  817,  688-  882,  700  Optimize for
+  674,  714-  898,  729  (G) Click-and-hold & special gesture functions
+  674,  735-  900,  750  G) Use mouse buttons in step sequencer
+  834,  762-  954,  771  Vertical scrolling speed
+  835,  790-  969,  799  Horizontal scrolling speed
+  674,  818-  792,  833  (G) Invert pencil buttons
+  662,  854-  729,  863  Undo history
+  675,  886-  830,  887  - 100 Maximum undo levels
+  693,  909-  782,  918  Undo knob tweaks
+  692,  930-  796,  939  Alternate undo mode
+  693,  952-  888,  960  Put undone recordings in the recycle bin
+ 1115,  455- 1215,  464  Colorful waveforms
+ 1104,  688- 1191,  699  Manage shortcuts
+  982, 1019- 1172, 1031  Trial v26.1.6 [build 5639]
+ 1178, 1025- 1255, 1026  - Windows
+   60, 1052-  215, 1068  p Type here to search
+  501, 1051-  520, 1068  o
+  547, 1048-  570, 1071  O
+ 1814, 1046- 1856, 1055  611 PM
+ 1809, 1064- 1861, 1074  9/12/2026

@@ -135,16 +135,17 @@ asymmetry.
 
 ## Next observations (no human needed)
 
-1. **Native API surface:** FL's OSC server is off by default (no UDP
-   sockets; no registry config; empty remote-scripts folder). Enabling it
-   requires in-app GUI steps — deferred until a human wants it; the
-   WebView path yielded a real surface without it.
-2. **Raise preflight noise out of the unknowns**: OPTIONS observations are
-   CORS mechanics, not API surface; a normalizer rule could classify them
-   (deliberate change, re-anchor discipline applies).
-3. **Plugin bridges (H3):** per ADR-008, capture `process_meta` with a hint
+1. **OSC — falsified (2026-09-12).** FL Studio 26.1.6 has no OSC support at
+   all: all ten Settings tabs checked, zero protocol-OSC strings in the
+   engine's UI vocabulary, a 25-minute passive listen on 127.0.0.1:9000
+   recorded nothing during active UI use, and no UDP sockets were ever
+   observed on FL64. Evidence: `evidence/h1-osc-falsified/`.
+2. **Plugin bridges (H3):** per ADR-008, capture `process_meta` with a hint
    matching the bridge process and inspect `named_pipes`/`pipe_present`
    evidence for structure (names, versions) — messages are not observable.
+3. **Raise preflight noise out of the unknowns**: OPTIONS observations are
+   CORS mechanics, not API surface; a normalizer rule could classify them
+   (deliberate change, re-anchor discipline applies).
 4. **Ecological control tier** (open5e-api/Gitea) for the benchmark's
    messier second tier.
 

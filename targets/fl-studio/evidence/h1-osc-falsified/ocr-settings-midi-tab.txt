@@ -1,0 +1,80 @@
+ 1630,    8- 1663,   17  346 MB
+    9,   14-  293,   26  FILE EDIT ADD PATTERNS VIEW OPTIONS TOOLS HELP
+  326,    8-  354,   19  (Trial)
+  307,   78-  353,   86  STARRED
+  714,   14-  734,   27  1 30
+  654,   81-  887,   94  Settings - MIDl input / output devices
+  639,  113-  904,  123  MIDI Audio General File Theme
+  659,  148-  696,  159  Output
+  666,  173-  780,  182  Microsoft MIDI Map#r
+  667,  190-  812,  199  Microsoft GS Wavetable Synth
+  671,  354-  905,  369  g) Send master sync Send all notes off
+  670,  394-  838,  402  Master sync offset (milliseconds)
+ 1068,  113- 1107,  126  Debug
+ 1130,  113- 1180,  123  Account
+ 1237,   15- 1257,   24  Line
+ 1203,  113- 1240,  123  About
+ 1712,    8- 1809,   17  cg,'D9 save off
+ 1712,   22- 1799,   31  All Plugins Edition
+   53,   49-   93,   57  Browser
+   21,   78-  171,   86  ALL PROJECT PLUGINS
+   39,  106-  132,  117  Current project
+   40,  129-  110,  140  Recent files
+   20,  154-  136,  166  4: Plugin database
+   20,  181-  125,  193  4: Plugin presets
+   39,  208-  137,  219  Channel presets
+   40,  235-  122,  246  Mixer presets
+   39,  262-   78,  273  Scores
+   38,  287-   73,  298  Audio
+   40,  310-   81,  325  Backup
+   20,  334-  154,  346  Cn Channel envelopes
+   20,  357-  129,  369  Cn Clipboard files
+   20,  380-  126,  392  Cn Demo projects
+   20,  403-  100,  415  Cn Envelopes
+   18,  426-   90,  436  a FL Cloud
+   20,  449-   93,  461  Cn Impulses
+   40,  471-   66,  482  Misc
+   20,  495-  109,  507  Cn My projects
+   40,  517-   71,  528  Packs
+   20,  541-  122,  553  Cn Project bones
+   18,  564-   95,  575  + Recorded
+   18,  585-   96,  594  + Rendered
+   18,  610-  114,  621  + Sliced audio
+   39,  632-  107,  643  Soundfonts
+   20,  656-   81,  668  Cn Speech
+   20,  679-   99,  691  Cn Templates
+   39,  701-   96,  712  User data
+  188,   78-  233,   86  PRESETS
+  250,   78-  290,   86  SOUNDS
+  942,  113-  984,  126  Project
+ 1007,  113- 1030,  123  Info
+  660,  436-  686,  447  Input
+  672,  682-  713,  694  Velocity
+  673,  711-  711,  720  Release
+  756,  646-  833,  655  Controller type
+  776,  681-  928,  694  0/0 Link note on velocity to
+  776,  710-  924,  723  070 Link release velocity to
+  671,  737-  803,  752  g) Pickup (takeover mode)
+  689,  761-  843,  769  Auto accept controller
+  690,  782-  825,  790  Foot pedal controls note off
+  660,  829-  726,  838  External sync
+  668,  884-  720,  892  Status: off
+  681,  927-  767,  936  Refresh device list
+  844,  858-  941,  867  Extemal clock sync
+  822,  927-  917,  939  Update MIDI scripts
+  987,  173- 1100,  182  Microsoft MIDI Mapper
+ 1032,  190- 1085,  202  synthesizer
+  974,  393- 1147,  405  Synchronization type MIDI clock
+ 1078,  681- 1221,  690  Omni preview MIDI channel
+ 1054,  711- 1221,  722  Song marker jump MIDI channel
+ 1052,  739- 1221,  748  Performance MIDI channel
+ 1057,  769- 1221,  777  Generator muting MIDI channel
+ 1031,  858- 1205,  867  External sync offset (milliseconds)
+ 1127,  929- 1247,  938  Enable FL Studio Remote
+  982, 1019- 1172, 1031  Trial v26.1.6 [build 5639]
+ 1178, 1025- 1255, 1026  - Windows
+   60, 1052-  215, 1068  p Type here to search
+  501, 1051-  520, 1068  o
+  547, 1048-  570, 1071  O
+ 1814, 1046- 1856, 1055  611 PM
+ 1809, 1064- 1861, 1074  9/12/2026
