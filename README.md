@@ -1,14 +1,16 @@
 # apire — mnehmos.api.re.mcp
 
-**Status:** working, tested (61 tests + 17-check stdio wire test, green).
-M1–M5 landed, plus `devtools_attach` from M6: engine (redaction, capture
-store, normalizer, OSC decoder, differential correlator, evidence KB,
-semantics valve, six exporters), server (7 action-enum tools), transports
-(`file_ingest`, `udp_observe`, `process_meta`, `devtools_attach`). Real
-evidence against live FL Studio 26.1.6, including a committed
-[`mcp_candidate` specimen](targets/fl-studio/exports/mcp_candidate.json)
-reconstructed from passive observation alone. Loopback proxy, pipe
-listener, and WS/SSE normalizers remain ([docs/roadmap.md](docs/roadmap.md)).
+**Status:** working, tested (69 tests + 17-check stdio wire test, green).
+M1–M5 landed, plus `devtools_attach` and `http_proxy` from M6: engine
+(redaction, capture store, body-aware normalizer, OSC decoder, differential
+correlator, evidence KB, semantics valve, six exporters), server (7
+action-enum tools), transports (`file_ingest`, `udp_observe`,
+`process_meta`, `devtools_attach`, `http_proxy`). The control benchmark runs
+in CI: endpoints reconstructed at 1.000 recall/precision with the planted
+spec discrepancy flagged; the FL Studio campaign produced a committed
+[`mcp_candidate` specimen](targets/fl-studio/exports/mcp_candidate.json).
+Remaining: log tailing, pipe enumeration, FL response bodies
+([docs/roadmap.md](docs/roadmap.md)).
 
 An MCP server that reverse engineers the API surface of an authorized application
 **by watching it**: it passively captures the traffic, frames, logs and bundles an

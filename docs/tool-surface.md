@@ -17,7 +17,7 @@ pins this — the registered schema must contain none of those verbs.
 
 | Action | Params | Returns |
 | ------ | ------ | ------- |
-| `start` | `transport` (http_proxy \| log_tail \| file_ingest \| devtools_attach \| pipe_listen \| udp_observe \| process_meta), `authorization_statement` (required, non-empty), `name`, `filter` (default "") | session/capture handle, listener status |
+| `start` | `transport` (http_proxy \| log_tail \| file_ingest \| devtools_attach \| udp_observe \| process_meta), `authorization_statement` (required, non-empty), `name`, `filter` (default "") | session/capture handle, listener status |
 | `stop` | `capture_id` | capture summary (frames, bytes, sha256) |
 | `status` | `capture_id` (default "" = all) | frame counters, dropped, redaction counts, listener health |
 | `list` | `session_id` (default "") | captures with labels, conditions, frame counts |

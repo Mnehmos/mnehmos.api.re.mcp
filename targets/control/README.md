@@ -2,10 +2,10 @@
 
 The instrument is only trusted after it measures something known.
 
-## reference_app/ (built in M2)
+## reference_app/ (built 2026-09-12)
 
-A small local application with a *committed* API specification it does and
-does not follow:
+A small local application with a committed API specification it does and
+does not follow (stdlib only, dependency-free by design):
 
 - REST endpoints covering the realistic cases: path/query params, pagination,
   polymorphic payloads, nested resources, error semantics.
@@ -21,11 +21,15 @@ does not follow:
 
 ## Scoring
 
-`score.py` (M2) computes the metrics table in
+`score.py` computes the metrics table in
 [docs/evaluation.md](../docs/evaluation.md) by comparing the evidence-graph
 projection against `openapi.json` — a deterministic script, never an LLM's
 opinion. Hard gates (zero leaked secrets, zero egress incidents, zero
-unearned confidence) are binary and release-blocking.
+unearned confidence) are binary and release-blocking; the benchmark runs in
+CI as `tests/test_benchmark.py`.
+
+First results (2026-09-12): endpoint recall/precision 1.000, method accuracy
+1.000, schema property P/R 0.75/0.75, planted discrepancy flagged, secrets 0.
 
 ## Ecological tier (M5+)
 

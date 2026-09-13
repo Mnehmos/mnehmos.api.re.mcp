@@ -135,6 +135,8 @@ def observation_key_for_frame(frame: dict) -> str:
                 kind, transport, "",
                 f"connection:{payload.get('proto','')}:{payload.get('remote_port',0)}:{payload.get('process','')}", "",
             )
+        if event == "pipe_present":
+            return canonical_key(kind, transport, "", "pipe:" + str(payload.get("pipe", "")).lower(), "")
         return canonical_key(kind, transport, "", event, "")
     # generic fallback: shape of the whole payload
     return canonical_key(kind, transport, "", "", shape_signature(payload))
@@ -147,20 +149,40 @@ def _parse_query_names(url: str) -> list[str]:
     return [seg.split("=", 1)[0] for seg in query.split("&") if seg]
 
 
+def _parse_json_sample(sample) -> Any:
+    if isinstance(sample, str) and sample.strip()[:1] in ("{", "["):
+        try:
+            return json.loads(sample)
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
 def observation_from_group(key: str, frames: list[dict]) -> dict:
     """Build the Observation for one canonical key from its sightings."""
     frames = sorted(frames, key=lambda f: (f.get("ts_utc", ""), f.get("capture_seq", 0)))
     kind = frames[0].get("kind_hint", "raw")
     payload0 = frames[0].get("payload", {})
+    payloads = [f.get("payload", {}) for f in frames]
     endpoint = ""
-    if kind == "http_request":
+    shape = _induce_shape(payloads)
+    if kind == "http_response":
+        # Prefer the *decoded body* for schema induction: the payload shell
+        # (path/status/headers) is transport plumbing, the body is the API.
+        parsed = [p for p in (_parse_json_sample(pl.get("body_sample")) for pl in payloads) if p is not None]
+        if parsed:
+            shape = _induce_shape(parsed)
+        statuses = {str(pl.get("status")) for pl in payloads if pl.get("status") not in (None, 0)}
+        if len(statuses) == 1:
+            shape = {"status": {"type": "number", "constant": int(next(iter(statuses)))}} | shape
+        endpoint = f"HTTP {payload0.get('status', '')} {path_template(str(payload0.get('path', '/')))}".strip()
+    elif kind == "http_request":
+        parsed = [p for p in (_parse_json_sample(pl.get("postData")) for pl in payloads) if p is not None]
+        if parsed:
+            shape = {**shape, "request_body": {"type": shape_signature(parsed[0])[:120], "variable": True}}
         url = str(payload0.get("url", "")).split("?", 1)[0].split("//", 1)[-1]
         endpoint = path_template("/" + url.split("/", 1)[-1] if "/" in url else url)
         endpoint = frames[0].get("payload", {}).get("method", "GET").upper() + " " + endpoint
-    elif kind == "http_response":
-        path = str(payload0.get("path", "/"))
-        status = str(payload0.get("status", ""))
-        endpoint = f"HTTP {status} {path_template(path)}".strip()
     elif kind == "osc_message":
         endpoint = str(payload0.get("address", ""))
     elif kind == "process_meta":
@@ -173,6 +195,8 @@ def observation_from_group(key: str, frames: list[dict]) -> dict:
             endpoint = f"socket {payload0.get('proto', '')} {payload0.get('local', '')} {payload0.get('process', '')}"
         elif event == "connection":
             endpoint = f"connection {payload0.get('proto', '')} :{payload0.get('remote_port', '')} {payload0.get('process', '')}"
+        elif event == "pipe_present":
+            endpoint = f"pipe {payload0.get('pipe', '')}"
         else:
             endpoint = event
         endpoint = endpoint.strip()
@@ -182,7 +206,7 @@ def observation_from_group(key: str, frames: list[dict]) -> dict:
         "transport": frames[0].get("transport", "unknown"),
         "endpoint_template": endpoint,
         "canonical_key": key,
-        "shape": _induce_shape([f.get("payload", {}) for f in frames]),
+        "shape": shape,
         "first_seen_utc": frames[0].get("ts_utc"),
         "last_seen_utc": frames[-1].get("ts_utc"),
         "observation_count": len(frames),

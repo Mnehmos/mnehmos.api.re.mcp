@@ -53,10 +53,14 @@ def openapi_document(store, capture_ids: list[str] | None = None, min_level: str
         }
         if row["responses"]:
             for resp in row["responses"]:
-                operation["responses"][resp["status"]] = {
+                entry: dict = {
                     "description": f"observed {resp['status']}",
                     "x-apire": {"observation_id": resp["observation_id"]},
                 }
+                body_shape = {k: v for k, v in (resp.get("shape") or {}).items() if k != "status"}
+                if body_shape:
+                    entry["content"] = {"application/json": {"schema": shape_to_schema(body_shape)}}
+                operation["responses"][resp["status"]] = entry
         else:
             operation["responses"]["default"] = {"description": "no response observed in the captured window"}
         paths.setdefault(path_key, {})[row["method"].lower()] = operation

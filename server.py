@@ -140,7 +140,7 @@ def _caps(capture_ids: list[str]) -> list[str]:
 @tool
 def api_re_capture(
     action: Literal["start", "stop", "status", "list", "label", "note"],
-    transport: Literal["file_ingest", "udp_observe", "process_meta", "http_proxy", "log_tail", "devtools_attach", "pipe_listen"] = "file_ingest",
+    transport: Literal["file_ingest", "udp_observe", "process_meta", "http_proxy", "log_tail", "devtools_attach"] = "file_ingest",
     name: str = "",
     authorization_statement: str = "",
     hypothesis: str = "",

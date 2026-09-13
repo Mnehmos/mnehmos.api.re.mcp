@@ -35,7 +35,6 @@ _KNOWN_TRANSPORTS = {
     "log_tail",
     "file_ingest",
     "devtools_attach",
-    "pipe_listen",
     "udp_observe",
     "process_meta",
 }

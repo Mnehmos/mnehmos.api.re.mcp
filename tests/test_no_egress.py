@@ -22,12 +22,19 @@ BANNED_IMPORTS = {
     "httpx",
     "aiohttp",
     "urllib.request",
+    "urllib.error",
     "http.client",
     "ftplib",
     "smtplib",
     "telnetlib",
     "pycurl",
 }
+
+# Banned as module paths, not roots: urllib.parse is pure parsing and must
+# not be confused with urllib.request (a precise scanner is one nobody is
+# tempted to weaken).
+BANNED_MODULES = sorted(BANNED_IMPORTS)
+_FROM_ALIASES = {"urllib": {"request", "error"}, "http": {"client"}}
 
 BANNED_CALLS = {
     "create_connection",
@@ -58,29 +65,66 @@ def _iter_engine_modules():
         yield rel, py
 
 
-def _scan_module(rel: Path, py: Path, violations: list) -> None:
-    tree = ast.parse(py.read_text(encoding="utf-8"), filename=str(py))
+def _is_banned_module(name: str) -> bool:
+    return any(name == b or name.startswith(b + ".") for b in BANNED_MODULES)
+
+
+def _banned_from_import(module: str, names: list[str]) -> bool:
+    if _is_banned_module(module):
+        return True
+    return bool(_FROM_ALIASES.get(module, set()) & set(names))
+
+
+def _scan_tree(rel: Path, tree: ast.AST, violations: list) -> None:
     allows_sockets = _module_allows_sockets(rel)
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
                 root = alias.name.split(".")[0]
-                if alias.name in BANNED_IMPORTS or root in {b.split(".")[0] for b in BANNED_IMPORTS}:
+                if _is_banned_module(alias.name):
                     violations.append(f"{rel}: import {alias.name}")
                 if root in BANNED_OUTSIDE_CAPTURE and not allows_sockets:
                     violations.append(f"{rel}: import {alias.name} outside apire/capture/")
         elif isinstance(node, ast.ImportFrom) and node.module:
             root = node.module.split(".")[0]
-            if node.module in BANNED_IMPORTS or root in {b.split(".")[0] for b in BANNED_IMPORTS}:
-                violations.append(f"{rel}: from {node.module} import ...")
+            names = [a.name for a in node.names]
+            if _banned_from_import(node.module, names):
+                violations.append(f"{rel}: from {node.module} import {','.join(names)}")
             if root in BANNED_OUTSIDE_CAPTURE and not allows_sockets:
                 violations.append(f"{rel}: from {node.module} import ... outside apire/capture/")
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             attr = node.func.attr
             if attr in BANNED_CALLS and not allows_sockets:
-                # socket-family calls outside the sanctioned capture modules
                 if "socket" in ast.unparse(node.func).lower() or attr == "create_connection":
                     violations.append(f"{rel}:{node.lineno}: call .{attr}() outside apire/capture/")
+
+
+def _scan_module(rel: Path, py: Path, violations: list) -> None:
+    tree = ast.parse(py.read_text(encoding="utf-8"), filename=str(py))
+    _scan_tree(rel, tree, violations)
+
+
+def test_scanner_precision():
+    """The scanner must distinguish parsing from egress, so nobody is ever
+    tempted to weaken it. urllib.parse is fine; urllib.request is not."""
+    allowed = ast.parse("from urllib.parse import urlsplit\nimport json\n")
+    v1: list = []
+    _scan_tree(Path("engine_probe.py"), allowed, v1)
+    assert v1 == [], f"urllib.parse wrongly flagged: {v1}"
+
+    banned_variants = [
+        "import urllib.request",
+        "from urllib import request",
+        "from urllib.request import urlopen",
+        "import http.client",
+        "from http import client",
+        "import requests",
+        "from httpx import get",
+    ]
+    for snippet in banned_variants:
+        v: list = []
+        _scan_tree(Path("engine_probe.py"), ast.parse(snippet), v)
+        assert v, f"egress import not flagged: {snippet}"
 
 
 def test_ban_list_is_still_specified():

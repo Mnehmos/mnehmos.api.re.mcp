@@ -19,7 +19,25 @@ A locally-run application whose API is documented. Two tiers:
    published spec (candidates already in the workspace: `open5e-api`,
    Gitea, etc.). Same scoring, messier reality.
 
-### Scoring (computed by `targets/control/score.py`, not by an LLM)
+## First results (2026-09-12, control target)
+
+`python targets/control/score.py` — deterministic, runs in CI as
+`tests/test_benchmark.py`:
+
+| Metric | Result |
+| ------ | ------ |
+| Endpoint recall | **1.000** (7/7 documented endpoints reconstructed) |
+| Endpoint precision | **1.000** |
+| Method accuracy | **1.000** |
+| Schema property precision / recall | 0.750 / 0.750 (the missing 0.25 *is* the planted discrepancy) |
+| Spec discrepancy flagged | **yes** — the reconstruction emitted `created_ts: number` and flagged `created_at` absent, following behavior over documentation |
+| Secrets leaked | 0 |
+| Frames recorded | 20 (10 requests / 10 responses across a 10-call scripted session) |
+
+The instrument measures. The challenge target (FL Studio) results are in
+[targets/fl-studio/README.md](../targets/fl-studio/README.md).
+
+## Scoring (computed by `targets/control/score.py`, not by an LLM)
 
 | Metric | Definition |
 | ------ | ---------- |
@@ -58,7 +76,9 @@ not a score — it is an audited demonstration:
      correlates with UI actions.
    - H2: MIDI-scripting host exposes a scripting bridge surface.
    - H3: plugin bridge processes exchange structured messages over
-     pipes/shared memory observable via `pipe_listen`.
+     pipes/shared memory. (Reframed by ADR-008: bridge existence and pipe
+     naming are observable through `process_meta`; message interception is
+     not, without an operator-configured pipe endpoint.)
    - H4: project file operations are mirrored in observable IPC.
 3. **Differential sessions.** Human performs labeled action batteries (open
    project / select channel / rename channel ×2 with different lengths / open

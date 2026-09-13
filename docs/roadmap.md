@@ -34,8 +34,11 @@ early because the FL Studio campaign needed them.
 
 ## M2 — loopback HTTP capture + server
 
-**Status: server done 2026-09-12** (7 tools, wire test 15/15); the loopback
-HTTP proxy itself is deferred to the next iteration.
+**Status: done 2026-09-12.** The 7-tool server landed with the M1/M2
+session; the loopback passthrough proxy landed later the same day
+(`apire/capture/http_proxy.py`, 6 tests: relay fidelity both directions,
+redaction passthrough, CONNECT refusal, 502 on unreachable origin, chunked
+relay). The control benchmark ([evaluation.md](evaluation.md)) runs in CI.
 
 - `apire/capture/http_proxy.py`: listen-only loopback proxy (the app points
   at it; it forwards observed exchanges unmodified — passthrough, not
@@ -105,16 +108,19 @@ reported; a second opinion pass reviews the mcp_candidate output.
 
 ## M6 — WS/SSE + attach transports; FL Studio campaign
 
-**Status: partially landed 2026-09-12** — `devtools_attach` (the WebView2
-attach transport) is live and produced the first passive map of FL Studio's
-cloud API surface. OSC remains blocked on an in-app enable (human step);
-`http_proxy`/`pipe_listen`/`log_tail` and WS/SSE normalizers pending.
-Also pending from the campaign: response bodies via `Network.getResponseBody`
-(the upgrade that would let the evidence settle the Unleash-vs-config rival
-readings).
+**Status: substantially landed 2026-09-12** — `devtools_attach` (WebView2
+attach), `http_proxy`, and `log_tail` are live; `pipe_listen` was removed
+from the vocabulary after investigation showed passive pipe interception is
+infeasible without injection (ADR-008) — pipe presence/naming is observed
+through `process_meta` instead. OSC remains blocked on an in-app enable
+(human step). Also pending from the campaign: response bodies via
+`Network.getResponseBody` (the upgrade that would let the evidence settle
+the Unleash-vs-config rival readings) and WS/SSE-dedicated normalizers
+(WS frames already traverse the pipeline via devtools_attach).
 
-- WS + SSE normalizers; `devtools_attach` (browser targets), `pipe_listen`,
-  `udp_observe`, `process_meta` transports.
+- WS + SSE normalizers; the `devtools_attach` transport (browser targets) and
+  `log_tail` landed early; named-pipe interception reframed by ADR-008
+  (presence/naming via `process_meta`, no listener).
 - FL Studio campaign begins per targets/fl-studio/README.md: install,
   capture OSC/pipe hypotheses, run differential sessions with human-performed
   actions.

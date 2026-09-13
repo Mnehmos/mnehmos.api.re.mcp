@@ -172,7 +172,9 @@ def endpoint_rows(store, capture_ids: list[str] | None, claims: dict[str, dict])
         parts = template.split(" ", 2)
         if len(parts) == 3:
             path = parts[2]
-            responses.setdefault(path, []).append({"status": parts[1], "observation_id": o["observation_id"]})
+            responses.setdefault(path, []).append(
+                {"status": parts[1], "observation_id": o["observation_id"], "shape": o["shape"]}
+            )
     rows = []
     for key, o in obs.items():
         if o["kind"] != "http_request":

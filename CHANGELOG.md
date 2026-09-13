@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.3.0 — 2026-09-12
+
+M2 complete: loopback proxy + control benchmark. 69 tests + 17-check wire test.
+
+### Added
+
+- `http_proxy` transport: loopback passthrough proxy. Forwards exactly what
+  the client sent, relays the origin's response, records both sides with
+  truncated body samples. CONNECT is refused (501, recorded) — an opaque
+  tunnel is unobservable. Body-aware schema induction: HTTP responses now
+  induct from decoded JSON bodies (the API), not the transport shell;
+  response-body definitions and OpenAPI response schemas follow.
+- Control benchmark: `targets/control/reference_app/` (stdlib reference app
+  + committed OpenAPI spec with a planted `created_at`/`created_ts`
+  discrepancy) and `targets/control/score.py`, run in CI via
+  `tests/test_benchmark.py`. First results: endpoints 1.000/1.000,
+  schema property P/R 0.75/0.75 (the gap *is* the planted discrepancy),
+  discrepancy flagged, zero secrets.
+- `_Reader`: buffered socket reader for the proxy — head reads must never
+  swallow body bytes (a live defect the proxy tests caught in the first
+  implementation).
+
+### Fixed
+
+- The no-egress scanner was over-broad: it banned the `urllib` root, so
+  even `urllib.parse` (pure parsing) tripped it while `from urllib import
+  request` would have slipped through the root check. Now module-path
+  precise (`urllib.parse` allowed; `urllib.request`, `from urllib import
+  request`, `from http import client` flagged) with a dedicated precision
+  test. A scanner nobody is tempted to weaken.
+
 ## 0.2.0 — 2026-09-12
 
 M5 complete: the six specification exporters. 61 tests + 17-check wire test.

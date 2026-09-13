@@ -129,6 +129,21 @@ class ProcessMetaListener:
             )
         )
 
+        # --- named pipes: enumerate (ADR-008 — interception is infeasible
+        # without being the pipe server; presence and names are the honest
+        # observable evidence, with per-entity frames for hint matches)
+        pipes: list[str] = []
+        try:
+            pipes = sorted(os.listdir("\\\\.\\pipe\\"))[:300]
+        except OSError:
+            pass
+        if pipes:
+            frames.append(self._meta({"event": "named_pipes", "count": len(pipes), "pipes": pipes}))
+            hint_l = hint.lower()
+            if hint_l:
+                for name in [n for n in pipes if hint_l in n.lower()][:50]:
+                    frames.append(self._meta({"event": "pipe_present", "pipe": name}))
+
         # --- modules for hinted processes (the DAW and its bridges)
         targets = [p for p in processes if not hint or hint.lower() in (p["name"] or "").lower()]
         for proc_info in targets[:12]:

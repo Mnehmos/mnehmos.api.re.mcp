@@ -15,12 +15,13 @@ TRANSPORTS = {
     "udp_observe": "apire.capture.udp_observe:UdpObserveListener",
     "process_meta": "apire.capture.process_meta:ProcessMetaListener",
     "devtools_attach": "apire.capture.devtools_attach:DevtoolsAttachListener",
-    # M2/M6: loopback passthrough proxy, named-pipe server, log tailing.
-    # Registered here only with their ADR-003 review done.
-    "http_proxy": None,
-    "pipe_listen": None,
-    "log_tail": None,
+    "http_proxy": "apire.capture.http_proxy:HttpProxyListener",
+    "log_tail": "apire.capture.log_tail:LogTailListener",
 }
+# Named pipes have no passive listener: a pipe can only be read by its
+# server, and becoming the server would require the target to be
+# reconfigured (or injection). Presence and naming are observed through
+# process_meta instead — see ADR-008.
 
 
 def create_listener(transport: str):

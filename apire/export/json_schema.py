@@ -30,6 +30,22 @@ def json_schema_document(store, capture_ids: list[str] | None = None, min_level:
             **shape_to_schema(row["shape"]),
             "x-apire": {**row["evidence"], "observation_id": row["observation_id"]},
         }
+        # response bodies get their own definitions: the API's data shapes.
+        # "status" is transport, not body — it lives in the def's name.
+        for resp in row.get("responses", []):
+            if not resp.get("shape"):
+                continue
+            body_shape = {k: v for k, v in resp["shape"].items() if k != "status"}
+            resp_key = slug(f"{row.get('method', 'msg')}_{row.get('path', '')}_response_{resp['status']}")
+            defs.setdefault(
+                resp_key,
+                {
+                    "title": f"{resp_key}",
+                    "description": f"observed response body for {row.get('method', '')} {row.get('path', '')} ({resp['status']})",
+                    **shape_to_schema(body_shape),
+                    "x-apire": {"observation_id": resp["observation_id"], "basis": "observed response body sample"},
+                },
+            )
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": "apire:observed",

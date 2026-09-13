@@ -1,0 +1,94 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Control Reference API",
+    "version": "1.0.0",
+    "description": "Ground truth for the apire evaluation benchmark. PLANTED DISCREPANCY: components.schemas.Project documents created_at as string(date); the application emits created_ts as integer (epoch seconds). A faithful reconstruction must follow observed behavior and flag the divergence."
+  },
+  "servers": [{ "url": "http://127.0.0.1:8210" }],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "health",
+        "responses": { "200": { "description": "service status" } }
+      }
+    },
+    "/api/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer" } },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "paginated projects" } }
+      }
+    },
+    "/api/projects/{id}": {
+      "get": {
+        "operationId": "getProject",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": {
+            "description": "project",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Project" } } }
+          },
+          "404": { "description": "not found" }
+        }
+      }
+    },
+    "/api/projects/{id}/tracks": {
+      "get": {
+        "operationId": "listTracks",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "tracks" }, "404": { "description": "not found" } }
+      },
+      "post": {
+        "operationId": "createTrack",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" } } } } }
+        },
+        "responses": {
+          "201": { "description": "created" },
+          "401": { "description": "unauthorized" },
+          "422": { "description": "validation" }
+        }
+      }
+    },
+    "/api/tracks/{id}": {
+      "get": {
+        "operationId": "getTrack",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "track" }, "404": { "description": "not found" } }
+      }
+    },
+    "/api/secure/session": {
+      "get": {
+        "operationId": "getSession",
+        "responses": { "200": { "description": "session info" }, "401": { "description": "unauthorized" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "created_at": { "type": "string", "format": "date" },
+          "track_count": { "type": "integer" }
+        }
+      },
+      "Track": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "gain": { "type": "number" }
+        }
+      }
+    }
+  }
+}

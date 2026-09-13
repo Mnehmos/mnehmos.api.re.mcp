@@ -190,6 +190,10 @@ def test_json_schema_defs_are_parsable_and_typed(rig):
     demo = next(v for k, v in doc["$defs"].items() if k.startswith("demo_projects_list"))
     assert demo["type"] == "object"
     assert demo["properties"]["method"]["const"] == "GET"
+    # response bodies get their own definitions, with transport status stripped
+    resp = next((v for k, v in doc["$defs"].items() if "response_200" in k), None)
+    assert resp is not None, "response body definition missing"
+    assert "status" not in resp.get("properties", {}), "status is transport, not body"
     json.dumps(doc)  # serializable
 
 

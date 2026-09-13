@@ -1,87 +1,72 @@
-# Session handoff — 2026-09-12 (autonomous FL Studio campaign)
+# Session handoff — 2026-09-12 (build-out session: M5 + M2 + benchmark + transports)
 
 ## Session metadata
 
 - Branch: main
-- Last commit: feat: FL Studio campaign — differential proof, devtools_attach,
-  first cloud-API map
-- Test status: `51 passed` (pytest) and `15 passed, 0 failed`
-  (tests/wire_test.py)
+- Last commit: M2 remainder + control benchmark + log_tail + ADR-008
+- Test status: `71 passed` (pytest, incl. the control benchmark in CI) and
+  `17 passed, 0 failed` (tests/wire_test.py)
 
 ## Current state
 
-Working and verified:
+Everything in the roadmap is now landed except the items listed under
+"Blocked / deferred" below:
 
-- All of 0.1.0, plus `devtools_attach` (DevTools/WebView2 attach transport)
-  with parser tests, a raw-HTTP client test, and a live attach test.
-- FL Studio campaign results (details + ids: targets/fl-studio/README.md,
-  CHANGELOG 0.1.1):
-  - Differential proof under matched instruments (process_meta/v2): 144
-    FL-exclusive candidates, reliability=sound, no confounds.
-  - Passive observation of FL's embedded Chromium (FL-Cloud grid): cloud
-    endpoints observed, 10 semantic claims at INFERRED 0.40 with verified
-    `captured_traffic` provenance; one rival-reading pair linked as
-    contradictions.
-  - Redaction exercised on live traffic: 4 Authorization headers + 33
-    credential-shaped values + 14 sensitive keys, zero leaks (manifest
-    audit).
-
-Broken: nothing known. FL Studio is currently running (relaunched by this
-session with the debug port enabled).
-
-## What was done and why
-
-The user delegated autonomous operation ("no human in the loop"). Executed:
-baseline re-take (close FL → absent captures → relaunch → present captures),
-correlation, CDP reconnaissance, `devtools_attach` implementation (two live
-defects found and fixed: keep-alive HTTP parsing, Origin-header rejection),
-and a live FL-Cloud load capture followed by the semantics valve.
+- **M5 exporters** (committed f625529): openapi, asyncapi, json_schema,
+  protocol_spec, architecture, mcp_candidate — per-element `x-apire`
+  evidence, `min_level` floors with speculative sections, no-secret audit.
+  FL specimen committed at `targets/fl-studio/exports/mcp_candidate.json`.
+- **M2 loopback proxy**: `apire/capture/http_proxy.py`, 6 tests (relay both
+  ways, redaction passthrough, CONNECT refused, 502, chunked intact).
+  Body-aware induction: responses now induct from decoded JSON bodies;
+  OpenAPI/JSON Schema carry response-body schemas.
+- **Control benchmark**: `targets/control/reference_app/` + `score.py`,
+  running in CI. First results: endpoint recall/precision 1.000, method
+  accuracy 1.000, schema property P/R 0.75/0.75 (the missing quarter is the
+  planted `created_at`/`created_ts` discrepancy, correctly flagged), zero
+  secrets. `tests/test_benchmark.py` gates it.
+- **log_tail** transport + tests (follows from end, truncation-safe).
+- **Named pipes reframed (ADR-008)**: `pipe_listen` removed from the
+  vocabulary — a pipe can only be read by its server, so passive
+  interception is impossible without injection. Pipe *names/presence* are
+  observed via `process_meta` (new `named_pipes` + `pipe_present` events).
+- **no-egress scanner made precise**: `urllib.parse` no longer flagged
+  (pure parsing); `from urllib import request` now correctly flagged; a
+  dedicated precision test pins both directions.
 
 ## Decision log
 
-- Attach before navigation: the transport polls /json/list at 0.25s and
-  attaches to a page target as soon as it exists (about:blank), so the load
-  sequence is captured. Learned the hard way in the first attempt, which
-  attached to a doomed instance.
-- Response observations now carry `HTTP <status> <path>` labels; without
-  them the response side of the graph was ungroupable.
-- Unleash rival reading: `/api/frontend` was proposed as
-  `flstudio.cloud.feature_flags` (the evidence names an Unleash host), kept
-  alongside the earlier `frontend_config` reading as linked contradictions
-  rather than overwriting. Revision-by-contradiction demonstrated on real
-  data.
-- `$LAST_CAPTURE`/`$LAST_CLAIM` chaining added to the dogfood client instead
-  of adding stateful tool parameters to the MCP surface.
+- Response observations induct from the decoded body, `status` stripped
+  from body schemas (it is transport, and it was polluting precision).
+- The proxy enforces `Connection: close` hop-by-hop; CONNECT is refused and
+  recorded (an opaque tunnel is unobservable — refuse, don't pretend).
+- `_Reader` exists because the first proxy implementation lost body bytes
+  between head and body reads — caught by tests, recorded in the module
+  docstring.
+- The benchmark scores the *response body* def for schema metrics; request
+  defs remain for request-shape evidence.
 
-## Deferred work (with reason)
+## Blocked / deferred (with reason)
 
-- Response bodies (`Network.getResponseBody`): needed to settle the
-  feature_flags-vs-config rivalry; next transport upgrade.
-- Next.js `/_next/data/<buildId>/` path-template collapse: build-id segment
-  varies, routes do not group yet (normalizer rule needed).
-- OSC (H1): requires in-app GUI enablement — human step, explicitly out of
-  scope for autonomous operation.
-- Exporters (M5): still pending; the graph should carry
-  `evidence_level` through projections first (partially done in
-  `apire/project.py`).
-
-## Open questions
-
-- Which cloud endpoints require the authenticated session (only the Unleash
-  host showed Authorization; the trial may be partially authenticated)?
-- Does FL-Cloud use WebSockets at all? Zero ws_frame observations in an
-  80s idle window (possibly load-only traffic).
+- **OSC (FL H1)**: requires in-app GUI enablement — human step.
+- **`Network.getResponseBody`** for devtools_attach: next upgrade; would let
+  the evidence settle the Unleash-vs-frontend_config rival readings.
+- **WS/SSE dedicated normalizers**: WS frames already traverse the pipeline
+  (devtools_attach stamps ws_url); SSE arrives via proxy body samples.
+  Nothing blocks on this; revisit when a target actually uses SSE.
+- **Ecological control tier** (open5e-api/Gitea): M5+ optional tier.
+- **FL campaign audit session**: a fresh session should attack the
+  STRONGLY_INFERRED+ FL claims before any of them is presented as settled.
 
 ## Known blockers
 
-None. FL is running; killing/relaunching it is safe (fresh trial, no user
-work in it).
+None technical.
 
 ## Next step (exactly one)
 
-Add `Network.getResponseBody` capture (opt-in, size-capped) to
-`devtools_attach`, then re-run the FL-Cloud load capture to settle the
-feature_flags-vs-frontend_config contradiction with response-shape evidence.
+Implement `Network.getResponseBody` capture (opt-in, size-capped) in
+`devtools_attach`, then re-run the FL-Cloud load capture and check whether
+the Unleash-vs-config contradiction resolves by response shape.
 
 ## CLAUDE.md changed?
 
@@ -90,8 +75,9 @@ feature_flags-vs-frontend_config contradiction with response-shape evidence.
 ## Runtime handoff fields
 
 - Source of truth: capture store (`apire_kb/`, machine-local, gitignored)
-- Allowed tools: 7 `api_re_*`; no transmission action exists
+- Allowed tools: 7 `api_re_*`; transports are the six in
+  `apire/capture/__init__.py`; no transmission action exists
 - Prohibited actions: any send/replay — enforced by tests/test_no_egress.py
-  and tests/test_tool_surface.py
-- Pending validations: `Network.getResponseBody` upgrade (above)
+  (now module-path precise) and tests/test_tool_surface.py
+- Pending validations: FL claim audit (above)
 - Commit status: clean tree after this session's commit
