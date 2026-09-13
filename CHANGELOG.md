@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.2.0 — 2026-09-12
+
+M5 complete: the six specification exporters. 61 tests + 17-check wire test.
+
+### Added
+
+- `apire/export/`: `openapi` (3.1), `asyncapi` (2.6), `json_schema`,
+  `protocol_spec`, `architecture`, `mcp_candidate`. Every element carries an
+  `x-apire` evidence block; anything below `min_level` moves to a
+  `speculative` section. `api_re_export` writes to `path` (directory gets
+  `<action>.json`) or returns the document inline.
+- Honesty surfaces in the documents: `unmatched_responses` (responses whose
+  request was never captured), explicit authentication posture, and a
+  guarantee line on `mcp_candidate` stating it specifies capabilities and
+  implements none.
+- Normalizer: opaque path segments (base64 blobs, URL-encoded CDN URLs,
+  Next.js build ids) collapse to `{var}` — per-sound waveform URLs are now
+  one observation with 22 sightings instead of dozens of n=1 rows, and
+  `/_next/data/<buildId>/…` routes group. Closes the roadmap's noted gap.
+- Dogfood client: `@file` script support (shell quoting is never part of an
+  observation session).
+- Committed specimen: `targets/fl-studio/exports/mcp_candidate.json`.
+
+### Changed
+
+- Claims whose observations were re-keyed by the normalizer change are
+  re-anchored by re-proposing against the new observation (the waveform
+  claim: `clm_6e84cd6c81910b27` @ INFERRED, 22 sightings). Lesson recorded:
+  observation ids derive from canonical keys, so normalizer changes are
+  deliberate acts — deferred: versioned normalization with claim re-derivation.
+
 ## 0.1.1 — 2026-09-12
 
 Autonomous FL Studio campaign: differential proof, WebView2 attach transport,

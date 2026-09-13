@@ -1,0 +1,735 @@
+{
+ "apire_mcp_candidate": 1,
+ "generated_utc": "2026-09-13T00:05:23Z",
+ "generator": "apire export mcp_candidate",
+ "min_level": "INFERRED",
+ "candidate_tools": [
+  {
+   "name": "analytics_google_com",
+   "kind": "http",
+   "description": "capabilities observed on analytics.google.com",
+   "actions": [
+    {
+     "action": "post_collect",
+     "http": "POST /g/collect",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 3,
+     "observation_ids": [
+      "obs_e966b0817bc550b5",
+      "obs_78917fc9bd4f3ce9",
+      "obs_04cb09024ae2ebba"
+     ]
+    }
+   ],
+   "best_level": "OBSERVED"
+  },
+  {
+   "name": "api_eu_amplitude_com",
+   "kind": "http",
+   "description": "capabilities observed on api.eu.amplitude.com",
+   "actions": [
+    {
+     "action": "options_httpapi",
+     "http": "OPTIONS /{var}/httpapi",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_d8c8ec9000707352"
+     ]
+    },
+    {
+     "action": "post_httpapi",
+     "http": "POST /{var}/httpapi",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_8015fbf17aad3c93"
+     ]
+    }
+   ],
+   "best_level": "OBSERVED"
+  },
+  {
+   "name": "cdn_amplitude_com",
+   "kind": "http",
+   "description": "capabilities observed on cdn.amplitude.com",
+   "actions": [
+    {
+     "action": "get_analytics_browser_gtm_2_2_1_min_js_gz",
+     "http": "GET /libs/analytics-browser-gtm-2.2.1-min.js.gz",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_3503deecad7cddd5"
+     ]
+    }
+   ],
+   "best_level": "OBSERVED"
+  },
+  {
+   "name": "cdn_encoder_cloud_image_line_com",
+   "kind": "http",
+   "description": "capabilities observed on cdn.encoder.cloud.image-line.com",
+   "actions": [
+    {
+     "action": "get_waveform",
+     "http": "GET /waveform/{var}",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 22,
+     "observation_ids": [
+      "obs_375311d40e3e40fb"
+     ]
+    }
+   ],
+   "best_level": "OBSERVED"
+  },
+  {
+   "name": "flstudio_cloud",
+   "kind": "http",
+   "description": "capabilities observed on o1373866.ingest.sentry.io",
+   "actions": [
+    {
+     "action": "catalog_filter_genre",
+     "http": "GET /filter/genre",
+     "evidence": {
+      "level": "INFERRED",
+      "confidence": 0.4,
+      "claim_id": "clm_5e6ee196e5afb487",
+      "semantic": "flstudio.cloud.catalog.filter_genre",
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+     },
+     "sightings": 2,
+     "observation_ids": [
+      "obs_3512653d2c6c4983"
+     ]
+    },
+    {
+     "action": "client_metrics",
+     "http": "POST /api/frontend/client/metrics",
+     "evidence": {
+      "level": "INFERRED",
+      "confidence": 0.4,
+      "claim_id": "clm_42cf5ccfa9b1641a",
+      "semantic": "flstudio.cloud.client_metrics",
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_0b21355063511704"
+     ]
+    },
+    {
+     "action": "connectivity_check",
+     "http": "HEAD /online.txt",
+     "evidence": {
+      "level": "INFERRED",
+      "confidence": 0.4,
+      "claim_id": "clm_6ff07a94ce3e49cd",
+      "semantic": "flstudio.cloud.connectivity_check",
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+     },
+     "sightings": 3,
+     "observation_ids": [
+      "obs_aab3b5338d7f0e32"
+     ]
+    },
+    {
+     "action": "content_component_data",
+     "http": "GET /content/additional-component-data/",
+     "evidence": {
+      "level": "INFERRED",
+      "confidence": 0.4,
+      "claim_id": "clm_ae5e71da2ebbde2d",
+      "semantic": "flstudio.cloud.content.component_data",
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+     },
+     "sightings": 3,
+     "observation_ids": [
+      "obs_7375b98b7ef01f4a"
+     ]
+    },
+    {
+     "action": "frontend_config",
+     "http": "GET /api/frontend",
+     "evidence": {
+      "level": "INFERRED",
+      "confidence": 0.4,
+      "claim_id": "clm_bb8fe91f6413a993",
+      "semantic": "flstudio.cloud.frontend_config",
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+     },
+     "sightings": 3,
+     "observation_ids": [
+      "obs_60b4d9a1621b1434"
+     ]
+    },
+    {
+     "action": "telemetry_envelope",
+     "http": "POST /api/{var}/envelope/",
+     "evidence": {
+      "level": "INFERRED",
+      "confidence": 0.4,
+      "claim_id": "clm_ffe9aa2e1d7819b7",
+      "semantic": "flstudio.cloud.telemetry_envelope",
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "semantic claim backed by verified provenance (see api_re_evidence explain)"
+     },
+     "sightings": 4,
+     "observation_ids": [
+      "obs_e49b46073fd98ba7"
+     ]
+    }
+   ],
+   "best_level": "INFERRED"
+  },
+  {
+   "name": "search_cloud_image_line_com",
+   "kind": "http",
+   "description": "capabilities observed on search.cloud.image-line.com",
+   "actions": [
+    {
+     "action": "get_all_trending_packs",
+     "http": "GET /product/sales/all-trending-packs/{var}",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_fdad40f70cf34822"
+     ]
+    },
+    {
+     "action": "get_available",
+     "http": "GET /product/labels/available",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_d1c3c2d24837b539"
+     ]
+    },
+    {
+     "action": "get_catalog",
+     "http": "GET /search/catalog/{var}",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 2,
+     "observation_ids": [
+      "obs_51556d3083ed5679"
+     ]
+    },
+    {
+     "action": "get_instrument",
+     "http": "GET /filter/instrument",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_29f0510560120d14"
+     ]
+    },
+    {
+     "action": "get_label",
+     "http": "GET /label",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_2459eb078652f172"
+     ]
+    },
+    {
+     "action": "get_tag",
+     "http": "GET /tag",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_bf6918062788c2b6"
+     ]
+    },
+    {
+     "action": "options_additional_component_data",
+     "http": "OPTIONS /content/additional-component-data/",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 2,
+     "observation_ids": [
+      "obs_3560c24997791223"
+     ]
+    },
+    {
+     "action": "options_all_trending_packs",
+     "http": "OPTIONS /product/sales/all-trending-packs/{var}",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_a3f2433ed65cafc8"
+     ]
+    },
+    {
+     "action": "options_available",
+     "http": "OPTIONS /product/labels/available",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_d239b76a1937d5b1"
+     ]
+    },
+    {
+     "action": "options_catalog",
+     "http": "OPTIONS /search/catalog/{var}",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 2,
+     "observation_ids": [
+      "obs_288e93857cb4e4a7"
+     ]
+    },
+    {
+     "action": "options_genre",
+     "http": "OPTIONS /filter/genre",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_86eb0dd80e95d879"
+     ]
+    },
+    {
+     "action": "options_instrument",
+     "http": "OPTIONS /filter/instrument",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_3a1dba2e2d8a0ade"
+     ]
+    },
+    {
+     "action": "options_label",
+     "http": "OPTIONS /label",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_1ffe0642334f510c"
+     ]
+    },
+    {
+     "action": "options_tag",
+     "http": "OPTIONS /tag",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_21b926c7199e864e"
+     ]
+    }
+   ],
+   "best_level": "OBSERVED"
+  },
+  {
+   "name": "sounds_cloud_image_line_com",
+   "kind": "http",
+   "description": "capabilities observed on sounds.cloud.image-line.com",
+   "actions": [
+    {
+     "action": "get_collections_json",
+     "http": "GET /_next/data/{var}/fl-studio/collections.json",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_c6007a987c1bc84b"
+     ]
+    },
+    {
+     "action": "get_fl_studio",
+     "http": "GET /fl-studio",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_8709ff8da051916a"
+     ]
+    },
+    {
+     "action": "get_fl_studio_grid_json",
+     "http": "GET /_next/data/{var}/fl-studio-grid.json",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 2,
+     "observation_ids": [
+      "obs_d4c647cc4c8ca283"
+     ]
+    },
+    {
+     "action": "get_fl_studio_json",
+     "http": "GET /_next/data/{var}/fl-studio.json",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_c2eaf814bdc14d13"
+     ]
+    },
+    {
+     "action": "get_offline_json",
+     "http": "GET /_next/data/{var}/offline.json",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 2,
+     "observation_ids": [
+      "obs_d7ed46164750df88"
+     ]
+    },
+    {
+     "action": "get_packs_json",
+     "http": "GET /_next/data/{var}/fl-studio/packs.json",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 2,
+     "observation_ids": [
+      "obs_9c553cb45d22a8cf"
+     ]
+    },
+    {
+     "action": "get_update_fl_studio_json",
+     "http": "GET /_next/data/{var}/update-fl-studio.json",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 2,
+     "observation_ids": [
+      "obs_b44fee6d0a71620e"
+     ]
+    },
+    {
+     "action": "head_fl_studio_grid_json",
+     "http": "HEAD /_next/data/{var}/fl-studio-grid.json",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_22a577178b28230b"
+     ]
+    }
+   ],
+   "best_level": "OBSERVED"
+  },
+  {
+   "name": "unleash_edge_cloud_image_line_com",
+   "kind": "http",
+   "description": "capabilities observed on unleash-edge.cloud.image-line.com",
+   "actions": [
+    {
+     "action": "options_frontend",
+     "http": "OPTIONS /api/frontend",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 3,
+     "observation_ids": [
+      "obs_b43dfdf7fe18a48d"
+     ]
+    },
+    {
+     "action": "options_metrics",
+     "http": "OPTIONS /api/frontend/client/metrics",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_c4a61e8ec6a24b3c"
+     ]
+    }
+   ],
+   "best_level": "OBSERVED"
+  },
+  {
+   "name": "www_googletagmanager_com",
+   "kind": "http",
+   "description": "capabilities observed on www.googletagmanager.com",
+   "actions": [
+    {
+     "action": "get_js",
+     "http": "GET /gtag/js",
+     "evidence": {
+      "level": "OBSERVED",
+      "confidence": 0.8,
+      "claim_id": null,
+      "semantic": null,
+      "captures": [
+       "cap_0144babac9e8"
+      ],
+      "basis": "presence in captured traffic; no semantic claim yet"
+     },
+     "sightings": 1,
+     "observation_ids": [
+      "obs_494e3ef5d2d87fdf"
+     ]
+    }
+   ],
+   "best_level": "OBSERVED"
+  }
+ ],
+ "speculative": {
+  "http": [],
+  "events": []
+ },
+ "guarantee": "This document specifies capabilities; it implements none. apire has no action that sends anything to the observed application, and this export contains no transport definition \u2014 building from it is a deliberate, separate act."
+}

@@ -72,19 +72,23 @@ pipe" becomes a stored, evidenced claim rather than a hunch.
 
 ### `api_re_export` — specifications out
 
+All six actions are live. Params: `min_level` (default `INFERRED`) and
+`path` (a directory gets `<action>.json`; empty returns the document
+inline) and optional `capture_ids`.
+
 | Action | Emits |
 | ------ | ----- |
-| `openapi` | OpenAPI 3.1 document from HTTP observations + induced schemas |
-| `asyncapi` | AsyncAPI document from WS/SSE/pipe event observations |
-| `json_schema` | induced payload schemas |
-| `protocol_spec` | protocol catalog: transports, message types, ordering rules, error semantics |
-| `architecture` | architecture map: processes, connections, services, boundaries |
-| `mcp_candidate` | proposed semantic capability surface: `project.get`, `track.plugins`, `project.events`… derived from the graph — a *specification of* an MCP, not an implementation of calls. The normal RE workflow decides which surfaces deserve to exist. |
+| `openapi` | OpenAPI 3.1 document from HTTP observations + induced schemas; numeric/opaque path segments become numbered parameters (`{p1}`), never guessed names |
+| `asyncapi` | AsyncAPI 2.6 document from WS/SSE/OSC/pipe observations; channels are the observed addresses/URLs, direction is what was observed |
+| `json_schema` | one JSON Schema definition per canonical key, `$defs`-named by semantic claim where one exists |
+| `protocol_spec` | the honest catalog: transports, endpoints, messages, 4xx/5xx errors, unmatched responses (no captured request), authentication posture |
+| `architecture` | processes, process surfaces (listening/outbound), connections, hosts |
+| `mcp_candidate` | proposed capability surface grouped into candidate tools; same-purpose actions merged across payload shapes. **Specifies capabilities; implements none — the document contains no transport definition and there is no call to make.** |
 
-Every export element carries `evidence_level` + `confidence` + citing
-captures; elements below the `min_level` parameter (default `INFERRED`) go to
-a separate `speculative` section. Authentication is always exported as
-"existing application session; credential material REDACTED at ingestion".
+Every element carries an `x-apire` evidence block (level, confidence, citing
+captures, claim id). Elements below `min_level` move to the document's
+`speculative` section — never silently mixed in. Exports contain no
+credential material by construction (redaction ran at ingestion).
 
 ## Response contract
 

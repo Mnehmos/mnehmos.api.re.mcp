@@ -86,10 +86,10 @@ def main() -> int:
         arch = c.call("api_re_architecture", {"action": "processes", "hint": ""})
         check("architecture processes", isinstance(arch, dict) and arch.get("ok") and arch["result"]["process_count"] > 3, str(arch)[:300])
 
-        # --- failure path: unsupported action (refusal over guessing)
-        r = c.call("api_re_export", {"action": "openapi"})
+        # --- failure path: not-yet-implemented action (refusal over guessing)
+        r = c.call("api_re_protocol", {"action": "events"})
         check(
-            "export refuses until M5",
+            "unimplemented action refuses",
             isinstance(r, dict) and r.get("ok") is False and r["error"]["code"] == "unsupported",
             str(r)[:300],
         )
@@ -127,6 +127,20 @@ def main() -> int:
             )
         else:
             check("proposal stored at zero confidence", False, "no observations to propose against")
+
+        # --- export writes a document (no secrets by construction)
+        import os
+        import tempfile
+
+        out_dir = tempfile.mkdtemp(prefix="apire_wire_")
+        r = c.call("api_re_export", {"action": "openapi", "path": out_dir})
+        check(
+            "export writes openapi",
+            isinstance(r, dict) and r.get("ok") is True and os.path.exists(r["result"]["written"]),
+            str(r)[:300],
+        )
+        probe = c.call("api_re_evidence", {"action": "policy"})
+        check("server alive after export", isinstance(probe, dict) and probe.get("ok") is True)
     finally:
         c.close()
 

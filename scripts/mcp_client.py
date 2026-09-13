@@ -113,11 +113,20 @@ def main(argv: list[str]) -> int:
                 print(name)
             return 0
         if mode == "call":
-            out = c.call(argv[2], json.loads(argv[3]) if len(argv) > 3 else {})
+            args_text = argv[3] if len(argv) > 3 else ""
+            if args_text.startswith("@"):
+                args_text = Path(args_text[1:]).read_text(encoding="utf-8")
+            out = c.call(argv[2], json.loads(args_text) if args_text else {})
             print(json.dumps(out, indent=1, default=str))
             return 0 if not (isinstance(out, dict) and out.get("ok") is False) else 1
         if mode == "run":
-            script = json.loads(argv[2])
+            # @file: read the step list from a file — shell quoting must never
+            # be part of running an observation session.
+            script_arg = argv[2]
+            if script_arg.startswith("@"):
+                script = json.loads(Path(script_arg[1:]).read_text(encoding="utf-8"))
+            else:
+                script = json.loads(script_arg)
             failed = False
             last_capture = ""
             last_claim = ""

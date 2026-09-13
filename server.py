@@ -30,6 +30,7 @@ from apire.correlate import compare as correlate_compare  # noqa: E402
 from apire.correlate import correlate as correlate_run  # noqa: E402
 from apire.errors import ApiReError, PolicyError, UnsupportedError  # noqa: E402
 from apire.evidence import Envelope  # noqa: E402
+from apire.export import EXPORTERS  # noqa: E402
 from apire.store import Store  # noqa: E402
 
 mcp = FastMCP("apire")
@@ -424,13 +425,27 @@ def api_re_export(
     path: str = "",
     capture_ids: list[str] = [],
 ) -> dict:
-    """Specification exports, projected from the evidence graph with each
-    element carrying its level. Not implemented yet (M5): the evidence must
-    exist before the exporter that flattens it."""
-    raise UnsupportedError(
-        f"export action '{action}' lands in M5 once protocol/architecture projections carry levels",
-        available_now=["api_re_protocol", "api_re_architecture", "api_re_evidence"],
-    )
+    """Specification exports, projected from the evidence graph. Every
+    element carries its evidence level; anything below min_level moves to a
+    speculative section. With `path`, the document is written there (a
+    directory gets <action>.json) and a summary returned; without it, the
+    document is returned inline. Exports contain no credential material and
+    implement no calls — mcp_candidate specifies a surface, it does not
+    create one."""
+    st = store()
+    env = Envelope(target=path or ",".join(capture_ids) or "exports", method=f"export.{action}")
+    doc = EXPORTERS[action](st, [c for c in capture_ids if c] or None, min_level)
+    if path:
+        target = Path(path)
+        if target.suffix == "":
+            target = target / f"{action}.json"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        text = json.dumps(doc, indent=1, default=str)
+        target.write_text(text, encoding="utf-8")
+        env.result = {"written": str(target), "bytes": len(text), "action": action, "min_level": min_level}
+    else:
+        env.result = {"action": action, "min_level": min_level, "document": doc}
+    return env.to_dict()
 
 
 if __name__ == "__main__":

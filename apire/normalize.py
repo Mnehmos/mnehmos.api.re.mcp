@@ -28,6 +28,21 @@ _KINDS = {
 
 # Segments that look like identifiers become template variables.
 _ID_SEGMENT_RE = re.compile(r"^[0-9]+$|^[0-9a-fA-F]{8,}$|^[0-9a-f]{8}-[0-9a-f]{4}.*")
+# Opaque blobs (base64/encoded URLs/build hashes) also become variables:
+# per-sound /waveform/<encoded-cdn-url> and /_next/data/<buildId>/ are one
+# observable behavior each, not hundreds.
+_OPAQUE_SEGMENT_RE = re.compile(r"^[A-Za-z0-9_\-%=]+$")
+_WORDLIKE_RE = re.compile(r"^[a-z0-9\-]+$")
+
+
+def _is_opaque(segment: str) -> bool:
+    if "%2f" in segment.lower():
+        return True
+    if len(segment) < 20 or not _OPAQUE_SEGMENT_RE.match(segment):
+        return False
+    # all-lowercase-hyphen segments are resource names ("all-trending-packs"),
+    # not identifiers
+    return not _WORDLIKE_RE.match(segment)
 
 
 def path_template(path: str) -> str:
@@ -37,7 +52,7 @@ def path_template(path: str) -> str:
     parts = path.split("/")
     out = []
     for seg in parts:
-        if seg and _ID_SEGMENT_RE.match(seg):
+        if seg and (_ID_SEGMENT_RE.match(seg) or _is_opaque(seg)):
             out.append("{var}")
         else:
             out.append(seg)

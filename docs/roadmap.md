@@ -88,6 +88,13 @@ regenerate the graph from captures alone → identical claims).
 
 ## M5 — semantics valve + exporters
 
+**Status: done 2026-09-12.** The valve landed with M3/M4; the six exporters
+(openapi, asyncapi, json_schema, protocol_spec, architecture, mcp_candidate)
+landed with per-element evidence floors, speculative sections, and a
+no-secret audit test. Dogfooded on the FL Studio evidence: the candidate
+surface groups 10 claims into named tools with every action carrying its
+level and citing observations.
+
 - `apire/semantics.py`, `apire/export/*` including `mcp_candidate`.
 - `api_re_semantics` + `api_re_export` live; full surface operational.
 - Export tests: emitted OpenAPI parses; no secret material in any export
