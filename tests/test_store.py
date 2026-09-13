@@ -84,6 +84,25 @@ def test_kb_json_is_atomic_and_corruption_raises(tmp_path):
         Store(root=tmp_path).list_captures()
 
 
+def test_stale_session_cannot_clobber_the_kb(tmp_path):
+    """Two live sessions must not silently overwrite each other: a session
+    whose in-memory copy is older than the file fails closed instead."""
+    a = Store(root=tmp_path)
+    cap = a.start_capture(transport="udp_observe", authorization_statement=AUTH)
+    b = Store(root=tmp_path)
+    b.label(cap["capture_id"], label="written-by-b")  # b saves, file moves on
+
+    with pytest.raises(StoreError) as err:
+        a.note(cap["capture_id"], seq=0, text="from-the-stale-session")
+    assert "changed on disk" in err.value.message
+
+    # a fresh load can write again; nothing was lost
+    c = Store(root=tmp_path)
+    c.note(cap["capture_id"], seq=0, text="from-a-fresh-session")
+    assert c.get_capture(cap["capture_id"])["label"] == "written-by-b"
+    assert any(n["text"] == "from-a-fresh-session" for n in c.get_capture(cap["capture_id"])["notes"])
+
+
 def test_observations_group_by_canonical_key(tmp_path):
     store = Store(root=tmp_path)
     cap = store.start_capture(transport="udp_observe", authorization_statement=AUTH)

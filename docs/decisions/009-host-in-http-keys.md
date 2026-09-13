@@ -1,7 +1,34 @@
-# 009. Host belongs in HTTP canonical keys — deferred with a plan
+# 009. Host belongs in HTTP canonical keys
 
-- **Status:** accepted (deferred implementation)
+- **Status:** implemented 2026-09-12
 - **Date:** 2026-09-12
+
+## Implementation (2026-09-12)
+
+- HTTP keys include the host (v2 normalizer); observations carry a `host`
+  field for disambiguation.
+- The KB header records `normalizer_version`; a mismatch surfaces as a
+  `normalizer_version_mismatch` warning on every read tool until the file is
+  re-saved under the current version.
+- `scripts/reanchor_v2.py` rebuilds v1-era ids from the stored frames (v1
+  formulas preserved in the script, not in the normalizer), remaps subjects,
+  provenance artifacts and canonical keys, and re-saves each claim through
+  the policy gate — so a migration that would attach evidence to something
+  that no longer exists fails loudly.
+- Live migration: **9 claims moved, 1 skipped, 0 failed** — the skip is the
+  historical waveform claim whose subject predates even v1 (`explain` still
+  flags it `subject_resolves: false`; it stays as the honest record).
+
+## Incident found while migrating (now a guard)
+
+The first migration wrote correctly, then a **long-lived background server**
+(finished OSC listening window) blind-wrote its stale in-memory KB over the
+result — last-writer-wins clobbering, silently. The store now fails closed:
+if the KB file changed on disk since this session loaded it, `_save_kb`
+raises `StoreError` with instructions instead of overwriting. Two live
+sessions can no longer lose each other's writes; restart-and-retry is the
+recovery. (ADR-007's review trigger — concurrent writers — fired; the
+fail-closed guard is the first step, a lockfile or merge is the future fix.)
 
 ## Context
 

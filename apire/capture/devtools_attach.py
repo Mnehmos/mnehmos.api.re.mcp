@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import socket
 import threading
 
@@ -30,7 +31,9 @@ _STATIC_EXTS = (".js", ".mjs", ".css", ".png", ".jpg", ".jpeg", ".gif", ".svg", 
 _MAX_WS_PAYLOAD = 4000
 _MAX_POST_DATA = 2000
 _MAX_RESPONSE_BODY = 16384
-_MAX_BODY_FETCH = 2_000_000
+# Fetch cap raised from 2 MB to 8 MB (env-overridable): the largest Next.js
+# catalog files were being skipped, and they are exactly the schema source.
+_MAX_BODY_FETCH = int(os.environ.get("APIRE_MAX_BODY_FETCH", "8000000"))
 
 
 def _is_static(url: str) -> bool:

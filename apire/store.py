@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from .errors import PolicyError, StoreError
-from .normalize import observation_from_group, observation_key_for_frame
+from .normalize import NORMALIZER_VERSION, observation_from_group, observation_key_for_frame
 from .redaction import redact_frame
 
 SCHEMA = 1
@@ -63,6 +63,14 @@ class Store:
         self.salt = salt if salt is not None else self._env_salt()
         self._lock = threading.Lock()
         self._kb = self._load_kb()
+        self._loaded_sig = self._file_sig()
+
+    def _file_sig(self) -> tuple | None:
+        try:
+            stat = self.kb_path.stat()
+            return (stat.st_mtime_ns, stat.st_size)
+        except FileNotFoundError:
+            return None
 
     # ------------------------------------------------------------ salt
 
@@ -97,9 +105,34 @@ class Store:
         kb.setdefault("claims", [])
         if not kb.get("salt_fingerprint") or kb.get("salt_fingerprint") == "none":
             kb["salt_fingerprint"] = fp
+        self._stored_normalizer = int(kb.get("normalizer_version", 1))
+        self.degraded: list[str] = []
+        if self._stored_normalizer != NORMALIZER_VERSION:
+            self.degraded.append(
+                f"KB was written under normalizer v{self._stored_normalizer}; observation keys changed "
+                f"in v{NORMALIZER_VERSION} (HTTP keys now include the host). Claims whose subjects no "
+                "longer resolve are flagged by api_re_evidence explain (`subject_resolves: false`); "
+                "re-anchor with scripts/reanchor_v2.py."
+            )
         return kb
 
+    def degraded_notes(self) -> list[str]:
+        """Non-fatal KB state notes; read tools surface them as warnings."""
+        return list(getattr(self, "degraded", []))
+
     def _save_kb(self) -> None:
+        # Fail closed if another session wrote the KB since this one loaded
+        # it: two live sessions would otherwise clobber each other's claims
+        # silently (observed for real — a long-lived background session
+        # overwrote a migration with its stale in-memory copy).
+        current = self._file_sig()
+        if current is not None and self._loaded_sig is not None and current != self._loaded_sig:
+            raise StoreError(
+                "the evidence KB changed on disk since this session loaded it (another apire "
+                "session is running?). Refusing to overwrite: restart this session to reload, "
+                "then retry — otherwise the other session's writes would be lost silently."
+            )
+        self._kb["normalizer_version"] = NORMALIZER_VERSION
         self._kb["salt_fingerprint"] = self.salt_fingerprint() or "none"
         self.kb_path.parent.mkdir(parents=True, exist_ok=True)
         if self.kb_path.exists():
@@ -118,6 +151,7 @@ class Store:
             except OSError:
                 pass
             raise
+        self._loaded_sig = self._file_sig()
 
     # ------------------------------------------------------------ captures
 

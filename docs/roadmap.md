@@ -130,6 +130,21 @@ honest measure published. Known limits recorded: ADR-009 (host in keys),
 and unknowns surfaces doing their job (the honest measure: how much is
 UNKNOWN, stated plainly).
 
+## Post-M6 hardening (2026-09-12)
+
+Platform complete; hardening pass after the M6 audit:
+
+- All six previously-refused actions implemented (commit 8f5eccd).
+- ADR-009 (host in HTTP keys) implemented + live KB migrated via
+  `scripts/reanchor_v2.py`; KB records `normalizer_version`.
+- Store fails closed on concurrent sessions (a real clobbering incident
+  during the migration became the guard + a regression test).
+- Body-fetch cap 2 MB → 8 MB (`APIRE_MAX_BODY_FETCH`).
+- Exports/tests hygiene: wire test uses its own KB; junk pruned.
+
+Remaining by design: ecological benchmark tier; optional MCP client
+registration; nothing else is tracked as unfinished.
+
 ## Standing rules across all milestones
 
 - Every milestone ships its verifier before its capability.

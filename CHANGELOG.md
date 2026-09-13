@@ -1,5 +1,48 @@
 # Changelog
 
+## 0.5.0 — 2026-09-12
+
+Every advertised action answers; ADR-009 implemented; body-fetch cap raised.
+
+### Added (commit 8f5eccd)
+
+- `protocol.events` (SSE + WS lifecycle, split from data `messages`),
+  `protocol.schemas` (induced shapes with evidence), `protocol.errors`
+  (4xx/5xx plus refused CONNECTs).
+- `architecture.services` (hosts clustered by registrable domain — IPs stay
+  whole — with their observed local client processes),
+  `architecture.boundaries` (loopback / local network / public internet
+  with the processes crossing them).
+- `evidence.experiments` (apire/experiments.py): deterministic proposals of
+  observations the OPERATOR could perform to raise a claim or settle a
+  contradiction, each citing the claim/observation that generated it.
+  The tool never pokes the target; this is what the operator does next.
+
+### Changed
+
+- **ADR-009 implemented**: HTTP canonical keys include the host; the KB
+  header records `normalizer_version`, and a mismatch surfaces as a warning
+  on every read tool. `scripts/reanchor_v2.py` migrated the live KB: 9
+  claims re-anchored, 1 historically stranded claim skipped (still flagged),
+  0 failed. The migration is what ADR-009 promised, now proven on real data.
+- **Store fails closed against concurrent sessions**: if the KB file
+  changed on disk since this session loaded it, saves raise `StoreError`
+  with recovery instructions. This is not theoretical — a long-lived
+  background session silently clobbered the first migration with its stale
+  in-memory copy. Two live sessions can no longer lose writes.
+- Body-fetch cap raised 2 MB → 8 MB, `APIRE_MAX_BODY_FETCH` to override (the
+  largest Next.js catalog files were being skipped; they are the schema
+  source).
+- `project.messages` labels WS frames by connection URL.
+- `kb.save_claim` now updates the subject on re-save by claim id — the
+  re-anchor test caught that it silently kept the old one.
+
+### Fixed
+
+- The wire test no longer writes into the real evidence KB (it proposes
+  claims on every run; `APIRE_KB` is set to a temp dir). 13 junk claims
+  from earlier test runs were pruned from the local KB.
+
 ## 0.4.1 — 2026-09-12
 
 Operator tooling + hypothesis H1 falsified.

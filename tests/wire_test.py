@@ -7,11 +7,17 @@ server is still answering — a tool call never crashes the stdio loop.
 from __future__ import annotations
 
 import json
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+
+# The wire test must never write into the real evidence KB: it proposes
+# claims, and every CI run would accumulate junk. Give the server its own.
+os.environ["APIRE_KB"] = tempfile.mkdtemp(prefix="apire_wire_kb_")
 
 from mcp_client import Client  # noqa: E402
 

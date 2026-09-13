@@ -131,6 +131,13 @@ def _caps(capture_ids: list[str]) -> list[str]:
     return [c["capture_id"] for c in store().list_captures()]
 
 
+def _notes(env: Envelope, st: Store) -> None:
+    """Surface KB state notes (e.g. a normalizer-version re-key) as warnings
+    on read tools, so degraded state is never silent."""
+    for note in st.degraded_notes():
+        env.warn("normalizer_version_mismatch", note, "degraded")
+
+
 # --------------------------------------------------------------------------
 # Tools
 # --------------------------------------------------------------------------
@@ -235,6 +242,7 @@ def api_re_observations(
     noise classification, and candidate signals."""
     st = store()
     env = Envelope(target=observation_id or ",".join(capture_ids) or "all", method=f"observations.{action}")
+    _notes(env, st)
     if action == "list":
         obs = st.build_observations(_caps(capture_ids))
         rows = [o for o in obs.values() if (not kind or o["kind"] == kind) and (not endpoint_prefix or endpoint_prefix in o["endpoint_template"])]
@@ -309,6 +317,7 @@ def api_re_protocol(
     errors catalogs observed failure behavior."""
     st = store()
     env = Envelope(target="protocol", method=f"protocol.{action}")
+    _notes(env, st)
     caps = _caps(capture_ids)
     if action == "transports":
         env.result = {"transports": project.transports_seen(st, caps)}
@@ -349,6 +358,7 @@ def api_re_architecture(
     network / public internet, with the processes crossing them)."""
     st = store()
     env = Envelope(target="architecture", method=f"architecture.{action}")
+    _notes(env, st)
     caps = _caps(capture_ids)
     if action == "processes":
         env.result = project.processes(st, caps, hint)
@@ -386,6 +396,7 @@ def api_re_evidence(
     target; the operator does). `limit` caps listings."""
     st = store()
     env = Envelope(target=subject or claim_id or "evidence", method=f"evidence.{action}")
+    _notes(env, st)
     if action == "query":
         rows = kb.query(st, subject, min_level, provenance_class)
         env.result = {"count": len(rows), "claims": rows[:limit], "truncated": len(rows) > limit}
@@ -468,6 +479,7 @@ def api_re_export(
     create one."""
     st = store()
     env = Envelope(target=path or ",".join(capture_ids) or "exports", method=f"export.{action}")
+    _notes(env, st)
     doc = EXPORTERS[action](st, [c for c in capture_ids if c] or None, min_level)
     if path:
         target = Path(path)

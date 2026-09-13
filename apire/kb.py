@@ -205,6 +205,7 @@ def save_claim(
         )
     claim.update(
         {
+            "subject": subject,  # re-saves may re-anchor a claim (ADR-009)
             "kind": kind,
             "value": value,
             "confidence": float(confidence),

@@ -26,6 +26,20 @@ _KINDS = {
     "raw",
 }
 
+# Bumped whenever canonical keys change. Stored in the KB header so a change
+# is detectable without archaeology; claims stranded by a re-key are flagged
+# by `explain` (subject_resolves) and recoverable via scripts/reanchor_v2.py.
+#
+# v2: HTTP keys include the host — `GET /tag` on two hosts are two
+#     observations, not one (ADR-009).
+NORMALIZER_VERSION = 2
+
+
+def _host_of(url: str) -> str:
+    if not url or "//" not in url:
+        return ""
+    return url.split("//", 1)[-1].split("/", 1)[0].split("?", 1)[0]
+
 # Segments that look like identifiers become template variables.
 _ID_SEGMENT_RE = re.compile(r"^[0-9]+$|^[0-9a-fA-F]{8,}$|^[0-9a-f]{8}-[0-9a-f]{4}.*")
 # Opaque blobs (base64/encoded URLs/build hashes) also become variables:
@@ -106,13 +120,15 @@ def observation_key_for_frame(frame: dict) -> str:
         method = str(payload.get("method", "GET")).upper()
         query_names = sorted(_parse_query_names(url))
         shape = "query(" + ",".join(query_names) + ")"
-        return canonical_key(kind, transport, method, path_template(path), shape)
+        return canonical_key(kind, transport, method, f"{_host_of(url)}{path_template(path)}", shape)
     if kind == "http_response":
         path = str(payload.get("path", "/"))
         # Exact status, not status class: a 204 and a 200-with-body on the
         # same path are different observable behaviors, and the body only
-        # exists for one of them.
-        return canonical_key(kind, transport, "", path_template(path), str(payload.get("status", 0)))
+        # exists for one of them. Host included when the frame carries a URL.
+        return canonical_key(
+            kind, transport, "", f"{_host_of(str(payload.get('url', '')))}{path_template(path)}", str(payload.get("status", 0))
+        )
     if kind == "osc_message":
         return canonical_key(kind, transport, "", str(payload.get("address", "/unknown")), str(payload.get("types", "")))
     if kind == "ws_frame" and payload.get("ws_url"):
@@ -222,6 +238,7 @@ def observation_from_group(key: str, frames: list[dict]) -> dict:
         "observation_id": "obs_" + hashlib.sha256(key.encode()).hexdigest()[:16],
         "kind": kind,
         "transport": frames[0].get("transport", "unknown"),
+        "host": _host_of(str(payload0.get("url", ""))),
         "endpoint_template": endpoint,
         "canonical_key": key,
         "shape": shape,
