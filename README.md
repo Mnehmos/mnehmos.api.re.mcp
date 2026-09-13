@@ -1,17 +1,14 @@
 # apire — mnehmos.api.re.mcp
 
-**Status:** working, tested (74 tests + 17-check stdio wire test, green).
-M0–M6 complete except OSC (needs an in-app enable by a human). Engine
-(redaction, capture store, body-aware normalizer, OSC decoder, differential
-correlator, evidence KB, semantics valve, six exporters), server (7
-action-enum tools), transports (`file_ingest`, `udp_observe`,
-`process_meta`, `devtools_attach` v2 with response bodies, `http_proxy`
-with SSE streaming, `log_tail`). Control benchmark in CI: endpoints
-1.000/1.000, planted discrepancy flagged. FL Studio campaign: three claims
-at STRONGLY_INFERRED, the Unleash-vs-config rivalry settled by captured
-response bodies, an audit with 64 unknowns stated plainly — see
-[targets/fl-studio/README.md](targets/fl-studio/README.md) and the
-[`mcp_candidate` specimen](targets/fl-studio/exports/mcp_candidate.json).
+**Status:** working, tested (89 tests + 22-check stdio wire test, green).
+The platform is complete: every advertised action on all seven tools
+answers, M0–M6 are done (OSC was falsified — FL 26 has none), ADR-009 is
+implemented with the live KB migrated, and there are two benchmark tiers —
+a deterministic reference app (endpoints 1.000/1.000, planted discrepancy
+flagged) and an ecological one against Gitea's own published spec, which
+found two real engine defects on its first run (both fixed with regression
+tests). Private remote:
+[github.com/Mnehmos/mnehmos.api.re.mcp](https://github.com/Mnehmos/mnehmos.api.re.mcp).
 
 An MCP server that reverse engineers the API surface of an authorized application
 **by watching it**: it passively captures the traffic, frames, logs and bundles an

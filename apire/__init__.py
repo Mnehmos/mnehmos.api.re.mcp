@@ -8,4 +8,4 @@ The only module permitted to touch sockets lives in apire/capture/ under the
 connect policy of ADR-003.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.5.1"
