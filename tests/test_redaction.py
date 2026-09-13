@@ -92,6 +92,27 @@ def test_report_counts_classes_and_carries_no_values():
     assert TOKEN not in text and API_KEY not in text and "hunter2" not in text
 
 
+def test_json_string_bodies_are_redacted_recursively(tmp_path):
+    """A JSON body captured as a *string* (postData, HAR body_sample) must
+    get key-name redaction inside it — the ecological tier caught a real
+    password leaking through this hole (Gitea signin POST)."""
+    frame = {
+        "kind_hint": "http_request",
+        "payload": {
+            "method": "POST",
+            "url": "http://127.0.0.1:3001/api/v1/user/signin",
+            "headers": {"Content-Type": "application/json"},
+            "postData": '{"user_name":"apire-fixture-user","password":"hunter2-abcdef"}',
+        },
+    }
+    red, report = redaction.redact_frame(frame)
+    assert "hunter2-abcdef" not in json.dumps(red)
+    body = json.loads(red["payload"]["postData"])
+    assert body["password"] == redaction.REDACTED
+    assert body["user_name"] == "apire-fixture-user"
+    assert report["classes_fired"]
+
+
 def test_stored_bytes_never_contain_the_token(tmp_path):
     """The M1 gate: ingest through the public store path, then read the raw
     manifest from disk. The store is the thing that must be clean."""

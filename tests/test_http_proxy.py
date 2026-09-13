@@ -45,6 +45,9 @@ class _Origin(http.server.BaseHTTPRequestHandler):
         elif self.path.startswith("/api/auth"):
             saw = "authorization" in {k.lower() for k in self.headers.keys()}
             self._json(200, {"authenticated": saw})
+        elif self.path.startswith("/api/host"):
+            # strict origins (Go's http server) reject requests without Host
+            self._json(200, {"host": self.headers.get("Host", "")})
         else:
             self._json(404, {"error": "nope"})
 
@@ -93,6 +96,15 @@ def test_exchange_is_relayed_and_recorded_both_sides(rig):
     assert req["payload"]["url"].endswith("/api/items?page=2")
     assert resp["payload"]["status"] == 200
     assert "kick" in resp["payload"]["body_sample"], "response body sample feeds schema induction"
+
+
+def test_host_header_is_rebuilt_for_the_upstream(rig):
+    """The proxy drops the client's Host and must set the target's — origins
+    that enforce HTTP/1.1 (Go's server, Gitea) reject otherwise."""
+    store, cap_id, listener, origin_port, proxy_port = rig
+    status, data = _request(proxy_port, "GET", f"http://127.0.0.1:{origin_port}/api/host")
+    assert status == 200
+    assert json.loads(data)["host"] == f"127.0.0.1:{origin_port}"
 
 
 def test_credentials_never_reach_the_manifest(rig):
@@ -177,7 +189,9 @@ def test_sse_stream_relays_incrementally_and_records_events(tmp_path):
     frames = [f for f in store.frames(cap["capture_id"]) if f["kind_hint"] == "sse_event"]
     assert len(frames) == 3, frames
     assert frames[0]["payload"]["event"] == "tick"
-    assert frames[2]["payload"]["data"] == '{"n": 3}'
+    # the data string is JSON and the redaction gate re-serializes JSON
+    # strings compactly (key-name scrubbing inside bodies)
+    assert json.loads(frames[2]["payload"]["data"]) == {"n": 3}
     assert frames[0]["payload"]["path"] == "/events"
 
 

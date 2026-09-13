@@ -186,11 +186,19 @@ def _read_body(reader: _Reader, headers: list[tuple[str, str]], to_eof: bool) ->
     return reader.drain(), ""
 
 
-def _rebuild_head(start_line: str, headers: list[tuple[str, str]], drop: set[str], force_close: bool) -> bytes:
+def _rebuild_head(
+    start_line: str,
+    headers: list[tuple[str, str]],
+    drop: set[str],
+    force_close: bool,
+    add: list[tuple[str, str]] | None = None,
+) -> bytes:
     out = [start_line]
     for k, v in headers:
         if k.lower() in drop or k.lower() in _HOP_BY_HOP:
             continue
+        out.append(f"{k}: {v}")
+    for k, v in add or []:
         out.append(f"{k}: {v}")
     if force_close:
         out.append("Connection: close")
@@ -331,7 +339,19 @@ class HttpProxyListener:
         try:
             upstream.settimeout(_READ_TIMEOUT)
             ureader = _Reader(upstream)
-            upstream.sendall(_rebuild_head(f"{method} {path} {version}", headers, drop={"host"}, force_close=True) + request_body_raw)
+            # Host is hop-by-hop-rebuilt, not dropped: Go's http server (and
+            # any strict HTTP/1.1 origin) rejects a request without it — a
+            # 400-everything bug the ecological tier (Gitea) caught.
+            upstream.sendall(
+                _rebuild_head(
+                    f"{method} {path} {version}",
+                    headers,
+                    drop={"host"},
+                    force_close=True,
+                    add=[("Host", split.netloc)],
+                )
+                + request_body_raw
+            )
             resp_head, found = ureader.read_until(b"\r\n\r\n")
             if not found:
                 self._respond(client, 502, "upstream closed before responding")

@@ -37,7 +37,19 @@ A locally-run application whose API is documented. Two tiers:
 The instrument measures. The challenge target (FL Studio) results are in
 [targets/fl-studio/README.md](../targets/fl-studio/README.md).
 
-## Scoring (computed by `targets/control/score.py`, not by an LLM)
+## Ecological tier (built 2026-09-12)
+
+A real third-party application with a published spec it does not coordinate
+with us about: **Gitea** (single binary, sqlite — chosen for runnability).
+`targets/control/ecological/` has the recipe (`run_gitea.cmd`) and the
+scorer (`score_ecological.py`). First results: endpoint precision 0.500
+(4 observed paths; two honest misses documented), version schema agreement
+1.000, secrets 0 — and **two real engine defects found and fixed on the
+first run** (the proxy sent no Host header upstream; credentials inside
+JSON-string bodies were not redacted). This tier is not in CI (it needs the
+binary); run it manually when touching transports or redaction.
+
+### Scoring (computed by `targets/control/score.py`, not by an LLM)
 
 | Metric | Definition |
 | ------ | ---------- |

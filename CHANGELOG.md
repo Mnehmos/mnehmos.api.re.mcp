@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.5.1 — 2026-09-12
+
+Ecological benchmark tier + the two engine defects its first run exposed.
+
+### Added
+
+- `targets/control/ecological/`: Gitea 1.27.3 as the ecological control —
+  a real application with its own published spec. Committed recipe
+  (`run_gitea.cmd`, relative-path `app.ini`), scorer
+  (`score_ecological.py`), README with first results. Not in CI (needs the
+  binary); run manually when touching transports or redaction.
+
+### Fixed (found by the ecological tier on its first run)
+
+- **The proxy sent no `Host` header upstream.** Python's http.server never
+  noticed; Gitea's Go server answered every proxied request with 400. The
+  proxy now rebuilds `Host` from the absolute-form target. Regression test
+  added.
+- **Credentials inside JSON-*string* bodies were not redacted.** A signin
+  POST captured as `postData` text bypassed key-name rules and the fixture
+  password reached the manifest. The redactor now parses JSON strings and
+  applies key-name rules recursively (log lines and HAR body samples had
+  the same hole). Regression test added.
+
+### Ecological first results
+
+- Endpoint precision 0.500: two honest misses — a word-like path segment
+  (`/users/apire-does-not-exist`) is not collapsed (genuine single-sighting
+  ambiguity; the two-sighting rule is a recorded normalizer v3 candidate),
+  and one probed route that Gitea itself 404s.
+- Version schema agreement 1.000 (spec resolved through its two-hop `$ref`
+  indirection); secrets 0.
+
 ## 0.5.0 — 2026-09-12
 
 Every advertised action answers; ADR-009 implemented; body-fetch cap raised.

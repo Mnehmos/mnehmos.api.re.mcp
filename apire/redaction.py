@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import re
 from typing import Any
 
@@ -169,8 +170,26 @@ def _walk(obj: Any, key: str, mode: str, salt: bytes | None, report: _Report) ->
         scrubbed = _strip_embedded(obj)
         if "://" in scrubbed or scrubbed.startswith("?"):
             scrubbed = _redact_url_query(scrubbed, mode, salt, report)
+        # A *string* that is itself JSON (postData, HAR body_sample, log
+        # payloads) must be parsed and key-name-redacted recursively — a
+        # password inside a JSON body string is still a password (caught by
+        # the ecological tier: Gitea's signin POST leaked to the manifest).
+        parsed = _try_json(scrubbed)
+        if parsed is not None:
+            redacted = _walk(parsed, key, mode, salt, report)
+            return json.dumps(redacted, separators=(",", ":"), default=str)
         return _redact_value(scrubbed, key, mode, salt, report)
     return obj
+
+
+def _try_json(text: str) -> Any | None:
+    head = text.lstrip()[:1]
+    if head not in ("{", "["):
+        return None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return None
 
 
 def redact_frame(frame: dict, mode: str = "redact", salt: bytes | None = None) -> tuple[dict, dict]:

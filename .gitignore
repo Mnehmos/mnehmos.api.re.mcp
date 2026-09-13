@@ -10,7 +10,8 @@ secrets.json
 # --- runtime evidence stores (never leave the machine) ---
 apire_kb/
 captures/
-targets/*/installers/
+targets/**/installers/
+targets/**/work/
 targets/*/captures/
 *.pcap
 *.pcapng
