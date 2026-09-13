@@ -151,26 +151,7 @@ def body_shape_to_schema(shape: dict) -> dict:
 # ---------------------------------------------------------------- frame context
 
 
-def frame_context(store, capture_ids: list[str] | None = None) -> dict:
-    """One pass over frames: per-canonical-key host, direction, ws url, URL."""
-    from ..normalize import observation_key_for_frame
-
-    caps = capture_ids if capture_ids else [c["capture_id"] for c in store.list_captures()]
-    ctx: dict[str, dict] = {}
-    for frame in store.iter_frames(caps):
-        key = observation_key_for_frame(frame)
-        entry = ctx.setdefault(key, {"host": "", "direction": "", "ws_url": "", "url": "", "chars": 0})
-        payload = frame.get("payload", {})
-        if not entry["direction"]:
-            entry["direction"] = frame.get("direction", "")
-        if payload.get("url") and not entry["url"]:
-            entry["url"] = payload["url"]
-            tail = payload["url"].split("//", 1)[-1]
-            entry["host"] = tail.split("/", 1)[0]
-        if payload.get("ws_url") and not entry["ws_url"]:
-            entry["ws_url"] = payload["ws_url"]
-        entry["chars"] += len(str(payload.get("payloadData", "")))
-    return ctx
+from ..project import frame_context  # noqa: E402  (re-exported for exporters)
 
 
 # ---------------------------------------------------------------- row collectors

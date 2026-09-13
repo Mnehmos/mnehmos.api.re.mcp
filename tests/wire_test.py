@@ -86,15 +86,22 @@ def main() -> int:
         arch = c.call("api_re_architecture", {"action": "processes", "hint": ""})
         check("architecture processes", isinstance(arch, dict) and arch.get("ok") and arch["result"]["process_count"] > 3, str(arch)[:300])
 
-        # --- failure path: not-yet-implemented action (refusal over guessing)
+        # --- the previously-refused projections are live: every advertised
+        # action on the surface now answers
         r = c.call("api_re_protocol", {"action": "events"})
-        check(
-            "unimplemented action refuses",
-            isinstance(r, dict) and r.get("ok") is False and r["error"]["code"] == "unsupported",
-            str(r)[:300],
-        )
+        check("protocol events live", isinstance(r, dict) and r.get("ok") is True, str(r)[:200])
+        r = c.call("api_re_protocol", {"action": "schemas", "limit": 3})
+        check("protocol schemas live", isinstance(r, dict) and r.get("ok") is True, str(r)[:200])
+        r = c.call("api_re_protocol", {"action": "errors"})
+        check("protocol errors live", isinstance(r, dict) and r.get("ok") is True, str(r)[:200])
+        r = c.call("api_re_architecture", {"action": "services"})
+        check("architecture services live", isinstance(r, dict) and r.get("ok") is True, str(r)[:200])
+        r = c.call("api_re_architecture", {"action": "boundaries"})
+        check("architecture boundaries live", isinstance(r, dict) and r.get("ok") is True, str(r)[:200])
+        r = c.call("api_re_evidence", {"action": "experiments", "limit": 5})
+        check("experiments live", isinstance(r, dict) and r.get("ok") is True, str(r)[:200])
         probe = c.call("api_re_evidence", {"action": "policy"})
-        check("server alive after unsupported", isinstance(probe, dict) and probe.get("ok") is True)
+        check("server alive after projections", isinstance(probe, dict) and probe.get("ok") is True)
 
         # --- failure path: bad enum value -> schema rejection, server survives
         r = c.call("api_re_capture", {"action": "exfiltrate"})

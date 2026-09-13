@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
-from apire import __version__, kb, project, semantics  # noqa: E402
+from apire import __version__, experiments, kb, project, semantics  # noqa: E402
 from apire.capture import create_listener  # noqa: E402
 from apire.correlate import compare as correlate_compare  # noqa: E402
 from apire.correlate import correlate as correlate_run  # noqa: E402
@@ -304,8 +304,9 @@ def api_re_protocol(
     limit: int = 50,
 ) -> dict:
     """The reconstructed protocol, as projections of the evidence graph.
-    transports/endpoints/messages are live; events/schemas/errors land in a
-    later milestone (refusal over guessing)."""
+    transports/endpoints/messages cover discrete traffic; events covers
+    lifecycle and event streams; schemas are the induced payload shapes;
+    errors catalogs observed failure behavior."""
     st = store()
     env = Envelope(target="protocol", method=f"protocol.{action}")
     caps = _caps(capture_ids)
@@ -320,7 +321,19 @@ def api_re_protocol(
         rows = project.messages(st, caps, prefix)
         env.result = {"count": len(rows), "messages": rows[:limit], "truncated": len(rows) > limit}
         return env.to_dict()
-    raise UnsupportedError(f"protocol action '{action}' lands in M5 (exporters milestone)")
+    if action == "events":
+        rows = project.events(st, caps, limit)
+        env.result = {"count": len(rows), "events": rows, "truncated": len(rows) >= limit}
+        return env.to_dict()
+    if action == "schemas":
+        rows = project.schemas(st, caps, prefix, limit)
+        env.result = {"count": len(rows), "schemas": rows, "truncated": len(rows) >= limit}
+        return env.to_dict()
+    if action == "errors":
+        rows = project.errors(st, caps, limit)
+        env.result = {"count": len(rows), "errors": rows, "truncated": len(rows) >= limit}
+        return env.to_dict()
+    raise UnsupportedError(f"protocol action '{action}'")
 
 
 @mcp.tool()
@@ -331,7 +344,9 @@ def api_re_architecture(
     hint: str = "",
 ) -> dict:
     """The observed deployment map: processes, listening sockets, module
-    scans (from process_meta). services/boundaries land later."""
+    scans (from process_meta), plus services (hosts clustered by registrable
+    domain with their local clients) and boundaries (loopback / local
+    network / public internet, with the processes crossing them)."""
     st = store()
     env = Envelope(target="architecture", method=f"architecture.{action}")
     caps = _caps(capture_ids)
@@ -343,7 +358,15 @@ def api_re_architecture(
     if action == "connections":
         env.result = project.connections(st, caps)
         return env.to_dict()
-    raise UnsupportedError(f"architecture action '{action}' lands in M6")
+    if action == "services":
+        rows = project.services(st, caps)
+        env.result = {"count": len(rows), "services": rows}
+        return env.to_dict()
+    if action == "boundaries":
+        rows = project.boundaries(st, caps)
+        env.result = {"count": len(rows), "boundaries": rows}
+        return env.to_dict()
+    raise UnsupportedError(f"architecture action '{action}'")
 
 
 @mcp.tool()
@@ -357,9 +380,10 @@ def api_re_evidence(
     limit: int = 20,
 ) -> dict:
     """The honesty surface: claims with provenance and verification records,
-    open contradictions, uninterpreted observations, and the policy itself.
-    `limit` caps query/unknowns listings (the honest default keeps responses
-    inside context budgets)."""
+    open contradictions, uninterpreted observations, the policy itself, and
+    experiments (deterministic proposals for observations the operator could
+    perform to raise claims or settle rivals — the tool never pokes the
+    target; the operator does). `limit` caps listings."""
     st = store()
     env = Envelope(target=subject or claim_id or "evidence", method=f"evidence.{action}")
     if action == "query":
@@ -377,10 +401,14 @@ def api_re_evidence(
         rows = kb.unknowns(st)
         env.result = {"count": len(rows), "unknowns": rows[:limit], "truncated": len(rows) > limit}
         return env.to_dict()
+    if action == "experiments":
+        rows = experiments.propose(st, subject, limit)
+        env.result = {"count": len(rows), "experiments": rows, "truncated": len(rows) >= limit}
+        return env.to_dict()
     if action == "policy":
         env.result = kb.policy()
         return env.to_dict()
-    raise UnsupportedError("experiments (proposed discriminating observations) land in M5")
+    raise UnsupportedError(f"evidence action '{action}'")
 
 
 @mcp.tool()
